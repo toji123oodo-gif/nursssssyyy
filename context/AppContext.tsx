@@ -1,12 +1,22 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, SubscriptionTier } from '../types';
+import { 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signInWithPopup,
+  signOut, 
+  onAuthStateChanged,
+  updateProfile,
+} from 'firebase/auth';
+import { auth, googleProvider } from '../src/firebase';
 
 interface AppContextType {
   user: User | null;
   isLoading: boolean;
-  login: (email: string, pass: string) => Promise<boolean>;
-  signup: (data: Omit<User, 'id'>) => Promise<void>;
-  logout: () => void;
+  login: (email: string, pass: string) => Promise<void>;
+  loginWithGoogle: () => Promise<void>;
+  signup: (data: Omit<User, 'id'> & { password?: string }) => Promise<void>;
+  logout: () => Promise<void>;
   upgradeToPro: () => void;
 }
 
@@ -16,88 +26,117 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [user, setUser] = useState<User | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    // Artificial delay for splash screen aesthetics (1.5 seconds)
-    const initApp = async () => {
-        const storedUser = localStorage.getItem('nursy_user');
-        if (storedUser) {
-            try {
-                setUser(JSON.parse(storedUser));
-            } catch (error) {
-                console.error("Failed to parse user data", error);
-                localStorage.removeItem('nursy_user');
-            }
-        }
-        
-        // Wait for 1.5 seconds to show the loader properly
-        setTimeout(() => {
-            setIsLoading(false);
-        }, 1500);
-    };
+  // Helper to get extra user data from localStorage since we don't have a DB yet
+  const getStoredUserData = (uid: string) => {
+    try {
+      const data = localStorage.getItem(`nursy_user_data_${uid}`);
+      return data ? JSON.parse(data) : null;
+    } catch (e) {
+      return null;
+    }
+  };
 
-    initApp();
+  const saveUserDataToLocal = (uid: string, data: Partial<User>) => {
+    const current = getStoredUserData(uid) || {};
+    localStorage.setItem(`nursy_user_data_${uid}`, JSON.stringify({ ...current, ...data }));
+  };
+
+  useEffect(() => {
+    if (!auth) {
+      console.warn("Auth not initialized. Skipping auth listener.");
+      setIsLoading(false);
+      return;
+    }
+
+    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+      if (firebaseUser) {
+        // Map Firebase User to App User
+        const localData = getStoredUserData(firebaseUser.uid);
+        
+        const mappedUser: User = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || localData?.name || 'Student',
+          // Handle cases where email might be null (e.g. Phone Auth)
+          email: firebaseUser.email || `phone_${firebaseUser.phoneNumber}` || '',
+          phone: firebaseUser.phoneNumber || localData?.phone || '',
+          subscriptionTier: localData?.subscriptionTier || 'free'
+        };
+        setUser(mappedUser);
+      } else {
+        setUser(null);
+      }
+      setIsLoading(false);
+    });
+
+    return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, pass: string): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        // Hardcoded Test Users
-        if (email === 'free@nursy.com' && pass === '123456') {
-          const user: User = { 
-            id: 'u_free', 
-            name: 'طالب مجاني', 
-            email, 
-            phone: '01000000001', 
-            subscriptionTier: 'free' 
-          };
-          setUser(user);
-          localStorage.setItem('nursy_user', JSON.stringify(user));
-          resolve(true);
-        } else if (email === 'pro@nursy.com' && pass === '123456') {
-          const user: User = { 
-            id: 'u_pro', 
-            name: 'طالب مشترك', 
-            email, 
-            phone: '01000000002', 
-            subscriptionTier: 'pro' 
-          };
-          setUser(user);
-          localStorage.setItem('nursy_user', JSON.stringify(user));
-          resolve(true);
-        } else {
-          resolve(false);
-        }
-      }, 1000); // Simulate network delay
-    });
+  const login = async (email: string, pass: string): Promise<void> => {
+    if (!auth) throw new Error("System Error: Firebase is not configured correctly.");
+    await signInWithEmailAndPassword(auth, email, pass);
   };
 
-  const signup = async (data: Omit<User, 'id'>) => {
-    return new Promise<void>((resolve) => {
-        setTimeout(() => {
-            const newUser: User = { ...data, id: `u_${Date.now()}` };
-            setUser(newUser);
-            localStorage.setItem('nursy_user', JSON.stringify(newUser));
-            resolve();
-        }, 1000);
-    });
+  const loginWithGoogle = async (): Promise<void> => {
+    if (!auth || !googleProvider) throw new Error("System Error: Google Auth not configured.");
+    const result = await signInWithPopup(auth, googleProvider);
+    // Initialize local data if new user
+    const localData = getStoredUserData(result.user.uid);
+    if (!localData) {
+      saveUserDataToLocal(result.user.uid, {
+        name: result.user.displayName || 'Student',
+        subscriptionTier: 'free'
+      });
+    }
   };
 
-  const logout = () => {
+  const signup = async (data: Omit<User, 'id'> & { password?: string }) => {
+    if (!auth) throw new Error("System Error: Firebase is not configured correctly.");
+    if (!data.password) throw new Error("Password is required");
+    
+    const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
+    
+    if (auth.currentUser) {
+      await updateProfile(auth.currentUser, {
+        displayName: data.name
+      });
+      
+      // Persist extra fields to local storage for now
+      saveUserDataToLocal(userCredential.user.uid, {
+        name: data.name,
+        phone: data.phone,
+        subscriptionTier: data.subscriptionTier
+      });
+      
+      // Force update state
+      setUser({
+        id: userCredential.user.uid,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subscriptionTier: data.subscriptionTier
+      });
+    }
+  };
+
+  const logout = async () => {
+    if (auth) {
+      await signOut(auth);
+    }
     setUser(null);
-    localStorage.removeItem('nursy_user');
-    localStorage.removeItem('nursy_premium'); // Clear legacy flag if any
+    localStorage.removeItem('nursy_user'); // Clear legacy if exists
   };
 
   const upgradeToPro = () => {
     if (user) {
       const updatedUser = { ...user, subscriptionTier: 'pro' as SubscriptionTier };
       setUser(updatedUser);
-      localStorage.setItem('nursy_user', JSON.stringify(updatedUser));
+      // Persist to local storage so it survives refresh
+      saveUserDataToLocal(user.id, { subscriptionTier: 'pro' });
     }
   };
 
   return (
-    <AppContext.Provider value={{ user, isLoading, login, signup, logout, upgradeToPro }}>
+    <AppContext.Provider value={{ user, isLoading, login, loginWithGoogle, signup, logout, upgradeToPro }}>
       {children}
     </AppContext.Provider>
   );

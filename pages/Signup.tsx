@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { UserPlus, CheckCircle, Shield, Zap } from 'lucide-react';
+import { UserPlus, CheckCircle, Shield, Zap, AlertCircle } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { SubscriptionTier } from '../types';
 
@@ -13,6 +13,7 @@ export const Signup: React.FC = () => {
   });
   const [selectedPlan, setSelectedPlan] = useState<SubscriptionTier>('free');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState('');
   
   const { signup } = useApp();
   const navigate = useNavigate();
@@ -20,15 +21,38 @@ export const Signup: React.FC = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
+    setError('');
 
-    await signup({
-      name: formData.name,
-      email: formData.email,
-      phone: formData.phone,
-      subscriptionTier: selectedPlan,
-    });
-    
-    navigate('/dashboard');
+    if (formData.password.length < 6) {
+        setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل');
+        setIsSubmitting(false);
+        return;
+    }
+
+    try {
+        await signup({
+          name: formData.name,
+          email: formData.email,
+          phone: formData.phone,
+          subscriptionTier: selectedPlan,
+          password: formData.password,
+        });
+        
+        navigate('/dashboard');
+    } catch (err: any) {
+        console.error(err);
+        if (err.code === 'auth/email-already-in-use') {
+            setError('البريد الإلكتروني مسجل بالفعل');
+        } else if (err.code === 'auth/invalid-email') {
+            setError('البريد الإلكتروني غير صالح');
+        } else if (err.code === 'auth/weak-password') {
+            setError('كلمة المرور ضعيفة جداً');
+        } else {
+            setError('حدث خطأ أثناء إنشاء الحساب. حاول مرة أخرى.');
+        }
+    } finally {
+        setIsSubmitting(false);
+    }
   };
 
   return (
@@ -41,6 +65,13 @@ export const Signup: React.FC = () => {
 
         <form onSubmit={handleSubmit} className="bg-brand-card border border-white/5 p-6 md:p-10 rounded-3xl shadow-2xl">
             
+            {error && (
+              <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-xl flex items-center gap-2 text-sm font-bold mb-6 animate-fade-in">
+                <AlertCircle size={18} />
+                {error}
+              </div>
+            )}
+
             {/* Personal Info */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div>
@@ -50,7 +81,8 @@ export const Signup: React.FC = () => {
                         required
                         value={formData.name}
                         onChange={e => setFormData({...formData, name: e.target.value})}
-                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none"
+                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none disabled:opacity-50"
+                        disabled={isSubmitting}
                     />
                 </div>
                 <div>
@@ -60,7 +92,8 @@ export const Signup: React.FC = () => {
                         required
                         value={formData.phone}
                         onChange={e => setFormData({...formData, phone: e.target.value})}
-                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none"
+                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none disabled:opacity-50"
+                        disabled={isSubmitting}
                     />
                 </div>
                 <div>
@@ -70,7 +103,8 @@ export const Signup: React.FC = () => {
                         required
                         value={formData.email}
                         onChange={e => setFormData({...formData, email: e.target.value})}
-                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none"
+                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none disabled:opacity-50"
+                        disabled={isSubmitting}
                     />
                 </div>
                 <div>
@@ -80,7 +114,8 @@ export const Signup: React.FC = () => {
                         required
                         value={formData.password}
                         onChange={e => setFormData({...formData, password: e.target.value})}
-                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none"
+                        className="w-full bg-brand-main border border-white/10 rounded-xl px-4 py-3 text-white focus:border-brand-gold outline-none disabled:opacity-50"
+                        disabled={isSubmitting}
                     />
                 </div>
             </div>
@@ -91,8 +126,8 @@ export const Signup: React.FC = () => {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Free Plan */}
                     <div 
-                        onClick={() => setSelectedPlan('free')}
-                        className={`cursor-pointer rounded-2xl p-5 border-2 transition-all ${selectedPlan === 'free' ? 'border-brand-muted bg-white/5' : 'border-white/5 hover:bg-white/5'}`}
+                        onClick={() => !isSubmitting && setSelectedPlan('free')}
+                        className={`cursor-pointer rounded-2xl p-5 border-2 transition-all ${selectedPlan === 'free' ? 'border-brand-muted bg-white/5' : 'border-white/5 hover:bg-white/5'} ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         <div className="flex justify-between items-center mb-3">
                             <h3 className="font-bold text-white text-lg">الباقة المجانية</h3>
@@ -106,8 +141,8 @@ export const Signup: React.FC = () => {
 
                     {/* Pro Plan */}
                     <div 
-                        onClick={() => setSelectedPlan('pro')}
-                        className={`cursor-pointer rounded-2xl p-5 border-2 transition-all relative overflow-hidden ${selectedPlan === 'pro' ? 'border-brand-gold bg-brand-gold/10' : 'border-white/5 hover:bg-white/5'}`}
+                        onClick={() => !isSubmitting && setSelectedPlan('pro')}
+                        className={`cursor-pointer rounded-2xl p-5 border-2 transition-all relative overflow-hidden ${selectedPlan === 'pro' ? 'border-brand-gold bg-brand-gold/10' : 'border-white/5 hover:bg-white/5'} ${isSubmitting ? 'opacity-50 cursor-not-allowed' : ''}`}
                     >
                         {selectedPlan === 'pro' && <div className="absolute top-0 right-0 bg-brand-gold text-brand-main text-xs font-bold px-3 py-1 rounded-bl-xl">موصى به</div>}
                         <div className="flex justify-between items-center mb-3">
@@ -126,9 +161,11 @@ export const Signup: React.FC = () => {
             <button
               type="submit"
               disabled={isSubmitting}
-              className="w-full bg-brand-gold text-brand-main font-bold py-4 rounded-xl hover:bg-brand-goldHover transition-all shadow-glow hover:shadow-glow-hover flex items-center justify-center gap-2 disabled:opacity-50"
+              className="w-full bg-brand-gold text-brand-main font-bold py-4 rounded-xl hover:bg-brand-goldHover transition-all shadow-glow hover:shadow-glow-hover flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
             >
-              {isSubmitting ? 'جاري التسجيل...' : (
+              {isSubmitting ? (
+                <div className="w-6 h-6 border-2 border-brand-main border-t-transparent rounded-full animate-spin"></div>
+              ) : (
                 <>
                   <span>إتمام التسجيل</span>
                   <UserPlus size={20} />
