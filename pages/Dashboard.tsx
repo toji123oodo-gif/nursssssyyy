@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Play, Star, Clock, AlertCircle, CheckCircle, XCircle, FileText, HelpCircle, ChevronLeft, Download, File, Activity } from 'lucide-react';
+import { Lock, Play, Star, Clock, AlertCircle, CheckCircle, XCircle, FileText, HelpCircle, Download, File, Activity } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Link } from 'react-router-dom';
 

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { BookOpen, Home, Wallet, Menu, X, User as UserIcon, LogOut, GraduationCap, LayoutDashboard, LogIn, UserPlus, ShieldAlert, Search, LifeBuoy } from 'lucide-react';
+import { Home, Wallet, Menu, X, User as UserIcon, LogOut, GraduationCap, LayoutDashboard, LogIn, UserPlus, ShieldAlert, Search, LifeBuoy } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
