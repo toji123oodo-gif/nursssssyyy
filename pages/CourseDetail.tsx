@@ -2,7 +2,7 @@ import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { courses } from '../data/courses';
 import { useApp } from '../context/AppContext';
-import { Play, Clock, BookOpen, Star, User, Shield, CheckCircle, Lock, ArrowLeft, Share2, Facebook, Twitter, MessageCircle, Tag, TrendingDown } from 'lucide-react';
+import { Play, Clock, BookOpen, Star, User, Shield, CheckCircle, Lock, ArrowLeft, Share2, Facebook, Twitter, MessageCircle, Tag, TrendingDown, Award, GraduationCap, Briefcase } from 'lucide-react';
 
 export const CourseDetail: React.FC = () => {
   const { courseId } = useParams();
@@ -150,6 +150,90 @@ export const CourseDetail: React.FC = () => {
                                  <h4 className="text-xl font-bold text-white mb-1">{course.instructor}</h4>
                                  <p className="text-brand-muted text-sm">أستاذ {course.subject} بكلية التمريض، خبرة 15 عاماً في التدريس الأكاديمي والعملي.</p>
                              </div>
+                        </div>
+                    </section>
+
+                    {/* Instructor Qualifications & Experience (New Section) */}
+                    <section className="animate-fade-in-up delay-100">
+                         <h3 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                            <Award className="text-brand-gold" />
+                            مؤهلات وخبرات المحاضر
+                        </h3>
+                        <div className="bg-brand-card border border-white/5 rounded-2xl p-8 relative overflow-hidden group hover:border-brand-gold/30 transition-all">
+                            {/* Background Decoration */}
+                            <div className="absolute top-0 right-0 w-64 h-64 bg-brand-gold/5 rounded-full blur-3xl pointer-events-none group-hover:bg-brand-gold/10 transition-colors"></div>
+
+                            <div className="flex flex-col md:flex-row gap-8 items-start relative z-10">
+                                {/* Profile Picture */}
+                                <div className="w-full md:w-1/3 flex flex-col items-center text-center">
+                                    <div className="w-32 h-32 md:w-40 md:h-40 rounded-full p-1 bg-gradient-to-br from-brand-gold to-yellow-600 shadow-xl mb-4 relative">
+                                        <img 
+                                            src="https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?q=80&w=400&auto=format&fit=crop" 
+                                            alt={course.instructor} 
+                                            className="w-full h-full object-cover rounded-full border-4 border-brand-card"
+                                        />
+                                        <div className="absolute bottom-2 right-2 bg-brand-main text-brand-gold p-2 rounded-full border border-brand-gold shadow-lg">
+                                            <CheckCircle size={16} fill="currentColor" className="text-brand-gold" />
+                                        </div>
+                                    </div>
+                                    <h4 className="text-xl font-bold text-white">{course.instructor}</h4>
+                                    <span className="text-brand-gold text-sm font-bold mb-4">دكتوراه في {course.subject}</span>
+                                    
+                                    <div className="flex gap-2">
+                                        <div className="p-2 bg-white/5 rounded-lg text-brand-muted hover:text-white hover:bg-brand-gold hover:text-brand-main transition-colors cursor-pointer">
+                                            <Facebook size={18} />
+                                        </div>
+                                        <div className="p-2 bg-white/5 rounded-lg text-brand-muted hover:text-white hover:bg-brand-gold hover:text-brand-main transition-colors cursor-pointer">
+                                            <Twitter size={18} />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Details */}
+                                <div className="w-full md:w-2/3 space-y-6">
+                                    <div>
+                                        <h5 className="text-lg font-bold text-white mb-3 flex items-center gap-2 border-b border-white/10 pb-2">
+                                            <GraduationCap size={18} className="text-brand-gold" />
+                                            المؤهلات العلمية
+                                        </h5>
+                                        <ul className="space-y-3 text-brand-muted text-sm">
+                                            <li className="flex items-start gap-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 shrink-0"></div>
+                                                <span>دكتوراه في علوم التمريض - جامعة القاهرة (2015).</span>
+                                            </li>
+                                            <li className="flex items-start gap-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 shrink-0"></div>
+                                                <span>ماجستير في {course.subject} وتطبيقاتها السريرية (2010).</span>
+                                            </li>
+                                            <li className="flex items-start gap-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 shrink-0"></div>
+                                                <span>زمالة الكلية الملكية للتمريض (المملكة المتحدة).</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+
+                                    <div>
+                                        <h5 className="text-lg font-bold text-white mb-3 flex items-center gap-2 border-b border-white/10 pb-2">
+                                            <Briefcase size={18} className="text-brand-gold" />
+                                            الخبرة العملية
+                                        </h5>
+                                        <ul className="space-y-3 text-brand-muted text-sm">
+                                            <li className="flex items-start gap-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 shrink-0"></div>
+                                                <span>رئيس قسم {course.subject} في المستشفى الجامعي سابقاً.</span>
+                                            </li>
+                                            <li className="flex items-start gap-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 shrink-0"></div>
+                                                <span>خبرة أكثر من 15 عاماً في تدريس طلاب كليات التمريض والمعاهد الفنية.</span>
+                                            </li>
+                                            <li className="flex items-start gap-3">
+                                                <div className="w-1.5 h-1.5 rounded-full bg-brand-gold mt-2 shrink-0"></div>
+                                                <span>مشارك في وضع مناهج وزارة الصحة للتدريب التمريض المستمر.</span>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </div>

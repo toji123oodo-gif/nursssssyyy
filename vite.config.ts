@@ -11,7 +11,7 @@ const __dirname = path.dirname(__filename);
 export default defineConfig({
   plugins: [react()],
   root: '.', // Serve files from the project root
-  base: './', // Use relative paths for assets
+  base: '/', // Changed from './' to '/' for Cloudflare Pages / SPA routing
   resolve: {
     alias: {
       '@': path.resolve(__dirname, './'), // Alias @ to the root directory

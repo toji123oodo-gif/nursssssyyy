@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Lock, Play, Star, Clock, AlertCircle, CheckCircle, XCircle, FileText, HelpCircle, Download, File, Activity } from 'lucide-react';
+import { Lock, Play, Star, Clock, AlertCircle, CheckCircle, XCircle, FileText, HelpCircle, Download, File, Activity, Unlock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { Link } from 'react-router-dom';
 
@@ -79,7 +79,7 @@ const Watermark: React.FC<{ userPhone: string }> = ({ userPhone }) => {
 };
 
 export const Dashboard: React.FC = () => {
-  const { user } = useApp();
+  const { user, upgradeToPro } = useApp();
   const [activeLesson, setActiveLesson] = useState(sampleLessons[0]);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [activeTab, setActiveTab] = useState<'video' | 'quiz' | 'resources'>('video');
@@ -166,6 +166,13 @@ export const Dashboard: React.FC = () => {
     }
   };
 
+  const handleSimulateUpgrade = () => {
+      upgradeToPro();
+      setShowUpgradeModal(false);
+      // Optional feedback
+      alert("تم تفعيل الاشتراك بنجاح! تم فتح التحميل.");
+  };
+
   if (!user) return null;
 
   return (
@@ -186,14 +193,20 @@ export const Dashboard: React.FC = () => {
             </div>
             <h3 className="text-2xl font-black text-white mb-2">هذا المحتوى للمشتركين فقط</h3>
             <p className="text-brand-muted mb-8">
-              أنت تستخدم الباقة المجانية. للوصول إلى باقي المحاضرات والامتحانات، يرجى ترقية حسابك.
+              أنت تستخدم الباقة المجانية. للوصول إلى باقي المحاضرات وتحميل الملفات، يرجى ترقية حسابك.
             </p>
-            <Link 
-              to="/wallet" 
-              className="block w-full bg-brand-gold text-brand-main font-bold py-4 rounded-xl hover:bg-brand-goldHover transition-all shadow-glow"
+            
+            {/* Simulation Button instead of Link */}
+            <button 
+              onClick={handleSimulateUpgrade}
+              className="block w-full bg-brand-gold text-brand-main font-bold py-4 rounded-xl hover:bg-brand-goldHover transition-all shadow-glow flex items-center justify-center gap-2"
             >
-              ترقية الحساب الآن
-            </Link>
+              <Unlock size={20} />
+              ترقية الحساب فوراً (محاكاة)
+            </button>
+            <p className="text-xs text-brand-muted mt-4">
+                في الوضع الحقيقي، سينقلك هذا لصفحة الدفع. هنا نقوم بالمحاكاة فقط.
+            </p>
           </div>
         </div>
       )}
@@ -270,7 +283,7 @@ export const Dashboard: React.FC = () => {
                 <div className="relative bg-black rounded-2xl overflow-hidden shadow-2xl ring-1 ring-white/10 aspect-video group">
                     <iframe 
                         className="w-full h-full absolute inset-0"
-                        src="https://www.youtube.com/embed/jfKfPfyJRdk?si=0&theme=dark&color=white" // Using existing placeholder
+                        src="https://www.youtube.com/embed/rDGqkMHPDqE?si=0&theme=dark&color=white" 
                         title="YouTube video player" 
                         frameBorder="0" 
                         allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" 
@@ -416,12 +429,16 @@ export const Dashboard: React.FC = () => {
                               </div>
                               <button 
                                 onClick={() => handleDownload(res.title)}
-                                disabled={user.subscriptionTier !== 'pro'}
-                                title={user.subscriptionTier !== 'pro' ? "هذه الميزة متاحة للمشتركين فقط" : "اضغط للتحميل"}
-                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${user.subscriptionTier === 'pro' ? 'bg-brand-gold text-brand-main hover:bg-brand-goldHover shadow-glow' : 'bg-white/5 text-brand-muted opacity-60 cursor-not-allowed'}`}
+                                // REMOVED DISABLED ATTRIBUTE to allow Free users to click and see modal
+                                title={user.subscriptionTier !== 'pro' ? "قم بالترقية للتحميل" : "اضغط للتحميل"}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${
+                                    user.subscriptionTier === 'pro' 
+                                    ? 'bg-brand-gold text-brand-main hover:bg-brand-goldHover shadow-glow' 
+                                    : 'bg-red-500/10 text-red-500 border border-red-500/20 hover:bg-red-500/20'
+                                }`}
                               >
                                   {user.subscriptionTier === 'pro' ? <Download size={16} /> : <Lock size={16} />}
-                                  <span>{res.type === 'pdf' ? 'تحميل PDF' : 'تحميل'}</span>
+                                  <span>{user.subscriptionTier === 'pro' ? (res.type === 'pdf' ? 'تحميل PDF' : 'تحميل') : 'ترقية للتحميل'}</span>
                               </button>
                           </div>
                       ))}
@@ -432,7 +449,7 @@ export const Dashboard: React.FC = () => {
                            <Lock className="text-yellow-500 shrink-0" size={20} />
                            <p className="text-yellow-200 text-sm">
                                تنبيه: تحميل الملفات (PDF) متاح فقط للمشتركين في الباقة الكاملة. 
-                               <Link to="/wallet" className="underline mr-1 font-bold">اشترك الآن</Link>
+                               <button onClick={() => setShowUpgradeModal(true)} className="underline mr-1 font-bold hover:text-white">اضغط للترقية</button>
                            </p>
                        </div>
                   )}
@@ -500,9 +517,9 @@ export const Dashboard: React.FC = () => {
                     <Star className="mx-auto text-brand-main mb-3" size={32} fill="currentColor" />
                     <h3 className="font-black text-xl mb-1">افتح كل الدروس</h3>
                     <p className="text-sm font-semibold opacity-80 mb-6">احصل على وصول كامل للكورسات والامتحانات</p>
-                    <Link to="/wallet" className="block w-full bg-brand-main text-brand-gold font-bold py-3.5 rounded-xl hover:bg-brand-hover transition-colors border border-brand-main/20 shadow-lg">
+                    <button onClick={() => setShowUpgradeModal(true)} className="block w-full bg-brand-main text-brand-gold font-bold py-3.5 rounded-xl hover:bg-brand-hover transition-colors border border-brand-main/20 shadow-lg">
                         اشترك الآن بـ 250 ج.م
-                    </Link>
+                    </button>
                 </div>
             )}
         </div>
