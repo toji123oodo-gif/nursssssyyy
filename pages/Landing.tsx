@@ -33,15 +33,6 @@ export const Landing: React.FC = () => {
   return (
     <div className="pb-20">
       
-      {/* Navbar Placeholder within content area for Desktop Login Button */}
-      <div className="hidden md:flex justify-end p-6 absolute top-0 left-0 w-full z-30">
-        {!user && (
-            <Link to="/login" className="bg-brand-gold hover:bg-brand-goldHover text-brand-main px-6 py-2.5 rounded-lg font-bold transition-all shadow-glow hover:shadow-glow-hover flex items-center gap-2">
-                <span className="mb-0.5">تسجيل الدخول</span>
-            </Link>
-        )}
-      </div>
-
       {/* Hero Section */}
       <section className="relative min-h-[90vh] flex items-center overflow-hidden">
         {/* Background Image with heavy overlay */}
@@ -55,7 +46,7 @@ export const Landing: React.FC = () => {
             <div className="absolute inset-0 bg-gradient-to-t from-brand-main via-transparent to-transparent"></div>
         </div>
         
-        <div className="container mx-auto px-6 relative z-10 pt-20">
+        <div className="container mx-auto px-6 relative z-10 pt-10">
           <div className="flex flex-col md:flex-row items-center gap-12">
             
             <div className="md:w-1/2 text-center md:text-right">
