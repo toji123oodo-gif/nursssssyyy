@@ -42,13 +42,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   useEffect(() => {
+    // 1. If Firebase Auth is not initialized (missing keys), check for Mock Session
     if (!auth) {
-      // If auth is missing (no API key), we stop loading but user remains null
-      console.warn("Auth not initialized. Check your .env file for VITE_FIREBASE_API_KEY.");
+      console.warn("Nursy: Firebase Auth not initialized (Missing API Key). Running in Mock Mode.");
+      const mockSession = localStorage.getItem('nursy_mock_session');
+      if (mockSession) {
+        try {
+          setUser(JSON.parse(mockSession));
+        } catch (e) {
+          localStorage.removeItem('nursy_mock_session');
+        }
+      }
       setIsLoading(false);
       return;
     }
 
+    // 2. Real Firebase Listener
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
         // Map Firebase User to App User
@@ -73,12 +82,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const login = async (email: string, pass: string): Promise<void> => {
-    if (!auth) throw new Error("Firebase configuration is missing. Cannot log in.");
+    if (!auth) {
+      // Mock Login
+      console.log("Mock Mode: Logging in...");
+      await new Promise(resolve => setTimeout(resolve, 800)); // Simulate network
+      const mockUser: User = {
+        id: 'mock-user-123',
+        name: 'Demo Student',
+        email: email,
+        phone: '01000000000',
+        subscriptionTier: 'free'
+      };
+      setUser(mockUser);
+      localStorage.setItem('nursy_mock_session', JSON.stringify(mockUser));
+      saveUserDataToLocal(mockUser.id, { name: mockUser.name, subscriptionTier: 'free' });
+      return;
+    }
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
   const loginWithGoogle = async (): Promise<void> => {
-    if (!auth) throw new Error("Firebase configuration is missing. Cannot log in with Google.");
+    if (!auth) {
+      // Mock Google Login
+      console.log("Mock Mode: Google Login...");
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const mockUser: User = {
+        id: 'mock-google-' + Date.now(),
+        name: 'Google User (Demo)',
+        email: 'demo.google@nursy.com',
+        phone: '',
+        subscriptionTier: 'free'
+      };
+      setUser(mockUser);
+      localStorage.setItem('nursy_mock_session', JSON.stringify(mockUser));
+      saveUserDataToLocal(mockUser.id, { name: mockUser.name, subscriptionTier: 'free' });
+      return;
+    }
+
     if (!googleProvider) throw new Error("Google Auth Provider failed to initialize.");
     
     const result = await signInWithPopup(auth, googleProvider);
@@ -93,7 +133,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const signup = async (data: Omit<User, 'id'> & { password?: string }) => {
-    if (!auth) throw new Error("Firebase configuration is missing. Cannot sign up.");
+    if (!auth) {
+      // Mock Signup
+      console.log("Mock Mode: Signing up...");
+      await new Promise(resolve => setTimeout(resolve, 800));
+      const mockUser: User = {
+        id: 'mock-user-' + Date.now(),
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        subscriptionTier: data.subscriptionTier
+      };
+      setUser(mockUser);
+      localStorage.setItem('nursy_mock_session', JSON.stringify(mockUser));
+      saveUserDataToLocal(mockUser.id, { 
+        name: data.name, 
+        phone: data.phone, 
+        subscriptionTier: data.subscriptionTier 
+      });
+      return;
+    }
+
     if (!data.password) throw new Error("Password is required");
     
     const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.password);
@@ -125,8 +185,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (auth) {
       await signOut(auth);
     }
+    // Clear state and mock storage
     setUser(null);
-    localStorage.removeItem('nursy_user'); // Clear legacy if exists
+    localStorage.removeItem('nursy_mock_session');
+    localStorage.removeItem('nursy_user'); 
   };
 
   const upgradeToPro = () => {
@@ -135,6 +197,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setUser(updatedUser);
       // Persist to local storage so it survives refresh
       saveUserDataToLocal(user.id, { subscriptionTier: 'pro' });
+      
+      // Also update mock session if active
+      if (!auth) {
+        localStorage.setItem('nursy_mock_session', JSON.stringify(updatedUser));
+      }
     }
   };
 
