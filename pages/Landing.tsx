@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Play, CheckCircle, Star, ArrowLeft, Clock, BookOpen, Shield, Award, Skull, Activity, Microscope, Stethoscope, BedDouble } from 'lucide-react';
-import { courses } from '../data/courses';
+import { courses as coursesData } from '../data/courses';
 import { useApp } from '../context/AppContext';
 
 const getCourseIcon = (subject: string) => {
@@ -17,6 +17,18 @@ const getCourseIcon = (subject: string) => {
 
 export const Landing: React.FC = () => {
   const { user } = useApp();
+  const [courses, setCourses] = useState<typeof coursesData>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    // Simulate data fetching delay
+    const timer = setTimeout(() => {
+        setCourses(coursesData);
+        setIsLoading(false);
+    }, 2000);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <div className="pb-20">
@@ -133,51 +145,82 @@ export const Landing: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {courses.map((course) => (
-              <Link to={`/course/${course.id}`} key={course.id} className="block group bg-brand-card rounded-2xl overflow-hidden border border-white/5 hover:border-brand-gold/30 transition-all duration-300 hover:shadow-glow hover:-translate-y-2 cursor-pointer">
-                {/* Image Area */}
-                <div className="relative h-56 overflow-hidden">
-                  <div className="absolute inset-0 bg-brand-main/20 group-hover:bg-transparent transition-colors z-10"></div>
-                  <img src={course.image} alt={course.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
-                  <div className="absolute top-4 right-4 z-20 bg-brand-main/80 backdrop-blur-sm text-brand-gold text-xs font-bold px-3 py-1.5 rounded-lg border border-brand-gold/20 flex items-center gap-2">
-                    {getCourseIcon(course.subject)}
-                    {course.subject}
-                  </div>
-                </div>
+            {isLoading ? (
+               // Loading Skeleton
+               [1, 2, 3].map((_, i) => (
+                   <div key={i} className="bg-brand-card rounded-2xl overflow-hidden border border-white/5">
+                        <div className="h-56 bg-white/5 animate-pulse relative overflow-hidden">
+                            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent skew-x-12 animate-[shimmer_1.5s_infinite]"></div>
+                        </div>
+                        <div className="p-6">
+                            <div className="h-7 bg-white/5 rounded w-3/4 mb-4 animate-pulse"></div>
+                            <div className="flex items-center gap-2 mb-6">
+                                <div className="w-5 h-5 rounded-full bg-white/5 animate-pulse shrink-0"></div>
+                                <div className="h-4 bg-white/5 rounded w-1/3 animate-pulse"></div>
+                            </div>
+                            
+                            <div className="grid grid-cols-2 gap-4 mb-6">
+                                <div className="h-10 bg-white/5 rounded animate-pulse"></div>
+                                <div className="h-10 bg-white/5 rounded animate-pulse"></div>
+                            </div>
 
-                {/* Content */}
-                <div className="p-6">
-                  <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-brand-gold transition-colors min-h-[3.5rem]">{course.title}</h3>
-                  <div className="flex items-center gap-2 text-brand-muted text-sm mb-6">
-                    <div className="w-5 h-5 rounded-full bg-brand-gold/20 flex items-center justify-center shrink-0">
-                        <CheckCircle size={12} className="text-brand-gold" />
+                            <div className="flex justify-between items-center border-t border-white/5 pt-4">
+                                <div className="space-y-2">
+                                    <div className="h-3 bg-white/5 rounded w-12 animate-pulse"></div>
+                                    <div className="h-8 bg-white/5 rounded w-20 animate-pulse"></div>
+                                </div>
+                                <div className="w-12 h-12 rounded-full bg-white/5 animate-pulse"></div>
+                            </div>
+                        </div>
+                   </div>
+               ))
+            ) : (
+                courses.map((course) => (
+                <Link to={`/course/${course.id}`} key={course.id} className="block group bg-brand-card rounded-2xl overflow-hidden border border-white/5 hover:border-brand-gold/30 transition-all duration-300 hover:shadow-glow hover:-translate-y-2 cursor-pointer">
+                    {/* Image Area */}
+                    <div className="relative h-56 overflow-hidden">
+                    <div className="absolute inset-0 bg-brand-main/20 group-hover:bg-transparent transition-colors z-10"></div>
+                    <img src={course.image} alt={course.title} className="w-full h-full object-cover transform group-hover:scale-110 transition-transform duration-700" />
+                    <div className="absolute top-4 right-4 z-20 bg-brand-main/80 backdrop-blur-sm text-brand-gold text-xs font-bold px-3 py-1.5 rounded-lg border border-brand-gold/20 flex items-center gap-2">
+                        {getCourseIcon(course.subject)}
+                        {course.subject}
                     </div>
-                    <span className="line-clamp-1">{course.instructor}</span>
-                  </div>
-                  
-                  <div className="grid grid-cols-2 gap-4 mb-6">
-                      <div className="bg-brand-main/50 rounded-lg p-2 text-center border border-white/5">
-                          <BookOpen className="w-4 h-4 text-brand-muted mx-auto mb-1" />
-                          <span className="text-xs text-white">{course.lessons.length} فصول</span>
-                      </div>
-                      <div className="bg-brand-main/50 rounded-lg p-2 text-center border border-white/5">
-                          <Clock className="w-4 h-4 text-brand-muted mx-auto mb-1" />
-                          <span className="text-xs text-white">15 ساعة</span>
-                      </div>
-                  </div>
+                    </div>
 
-                  <div className="flex justify-between items-center border-t border-white/5 pt-4">
-                    <div className="flex flex-col">
-                        <span className="text-xs text-brand-muted">سعر الكورس</span>
-                        <span className="text-2xl font-black text-brand-gold">{course.price} <span className="text-xs font-bold text-brand-muted">ج.م</span></span>
+                    {/* Content */}
+                    <div className="p-6">
+                    <h3 className="text-lg font-bold text-white mb-2 line-clamp-2 group-hover:text-brand-gold transition-colors min-h-[3.5rem]">{course.title}</h3>
+                    <div className="flex items-center gap-2 text-brand-muted text-sm mb-6">
+                        <div className="w-5 h-5 rounded-full bg-brand-gold/20 flex items-center justify-center shrink-0">
+                            <CheckCircle size={12} className="text-brand-gold" />
+                        </div>
+                        <span className="line-clamp-1">{course.instructor}</span>
                     </div>
-                    <div className="w-12 h-12 bg-white text-brand-main rounded-full flex items-center justify-center group-hover:bg-brand-gold transition-colors shadow-lg">
-                        <Play size={20} fill="currentColor" className="ml-1" />
+                    
+                    <div className="grid grid-cols-2 gap-4 mb-6">
+                        <div className="bg-brand-main/50 rounded-lg p-2 text-center border border-white/5">
+                            <BookOpen className="w-4 h-4 text-brand-muted mx-auto mb-1" />
+                            <span className="text-xs text-white">{course.lessons.length} فصول</span>
+                        </div>
+                        <div className="bg-brand-main/50 rounded-lg p-2 text-center border border-white/5">
+                            <Clock className="w-4 h-4 text-brand-muted mx-auto mb-1" />
+                            <span className="text-xs text-white">15 ساعة</span>
+                        </div>
                     </div>
-                  </div>
-                </div>
-              </Link>
-            ))}
+
+                    <div className="flex justify-between items-center border-t border-white/5 pt-4">
+                        <div className="flex flex-col">
+                            <span className="text-xs text-brand-muted">سعر الكورس</span>
+                            <span className="text-2xl font-black text-brand-gold">{course.price} <span className="text-xs font-bold text-brand-muted">ج.م</span></span>
+                        </div>
+                        <div className="w-12 h-12 bg-white text-brand-main rounded-full flex items-center justify-center group-hover:bg-brand-gold transition-colors shadow-lg">
+                            <Play size={20} fill="currentColor" className="ml-1" />
+                        </div>
+                    </div>
+                    </div>
+                </Link>
+                ))
+            )}
           </div>
           
         </div>
