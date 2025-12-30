@@ -416,18 +416,24 @@ export const Dashboard: React.FC = () => {
                               </div>
                               <button 
                                 onClick={() => handleDownload(res.title)}
-                                className={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${user.subscriptionTier === 'pro' ? 'bg-brand-gold/10 text-brand-gold hover:bg-brand-gold hover:text-brand-main' : 'bg-white/5 text-brand-muted hover:bg-white/10'}`}
+                                disabled={user.subscriptionTier !== 'pro'}
+                                title={user.subscriptionTier !== 'pro' ? "هذه الميزة متاحة للمشتركين فقط" : "اضغط للتحميل"}
+                                className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${user.subscriptionTier === 'pro' ? 'bg-brand-gold text-brand-main hover:bg-brand-goldHover shadow-glow' : 'bg-white/5 text-brand-muted opacity-60 cursor-not-allowed'}`}
                               >
-                                  {user.subscriptionTier === 'pro' ? <Download size={18} /> : <Lock size={16} />}
+                                  {user.subscriptionTier === 'pro' ? <Download size={16} /> : <Lock size={16} />}
+                                  <span>{res.type === 'pdf' ? 'تحميل PDF' : 'تحميل'}</span>
                               </button>
                           </div>
                       ))}
                   </div>
 
                   {user.subscriptionTier === 'free' && (
-                       <div className="mt-8 p-4 bg-yellow-900/20 border border-yellow-700/30 rounded-xl flex items-center gap-3">
+                       <div className="mt-8 p-4 bg-yellow-900/20 border border-yellow-700/30 rounded-xl flex items-center gap-3 animate-pulse">
                            <Lock className="text-yellow-500 shrink-0" size={20} />
-                           <p className="text-yellow-200 text-sm">بعض الملفات قد تكون متاحة فقط للمشتركين في الباقة الكاملة.</p>
+                           <p className="text-yellow-200 text-sm">
+                               تنبيه: تحميل الملفات (PDF) متاح فقط للمشتركين في الباقة الكاملة. 
+                               <Link to="/wallet" className="underline mr-1 font-bold">اشترك الآن</Link>
+                           </p>
                        </div>
                   )}
               </div>
