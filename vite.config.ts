@@ -3,17 +3,18 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
+// Fix for __dirname in ESM
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [react()],
-  root: '.', // Explicitly set root to current directory
+  root: '.', // Serve files from the project root
   base: './', // Use relative paths for assets
   resolve: {
     alias: {
-      '@': path.resolve(__dirname, './'), // Allow @/ to map to root
+      '@': path.resolve(__dirname, './'), // Alias @ to the root directory
     },
   },
   server: {
@@ -24,10 +25,5 @@ export default defineConfig({
     outDir: 'dist',
     emptyOutDir: true,
     sourcemap: true,
-    rollupOptions: {
-      input: {
-        main: path.resolve(__dirname, 'index.html'),
-      },
-    },
   }
 });
