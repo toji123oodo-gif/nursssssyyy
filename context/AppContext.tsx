@@ -17,17 +17,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    // Check local storage for persistent session safely
-    const storedUser = localStorage.getItem('nursy_user');
-    if (storedUser) {
-      try {
-        setUser(JSON.parse(storedUser));
-      } catch (error) {
-        console.error("Failed to parse user data", error);
-        localStorage.removeItem('nursy_user');
-      }
-    }
-    setIsLoading(false);
+    // Artificial delay for splash screen aesthetics (1.5 seconds)
+    const initApp = async () => {
+        const storedUser = localStorage.getItem('nursy_user');
+        if (storedUser) {
+            try {
+                setUser(JSON.parse(storedUser));
+            } catch (error) {
+                console.error("Failed to parse user data", error);
+                localStorage.removeItem('nursy_user');
+            }
+        }
+        
+        // Wait for 1.5 seconds to show the loader properly
+        setTimeout(() => {
+            setIsLoading(false);
+        }, 1500);
+    };
+
+    initApp();
   }, []);
 
   const login = async (email: string, pass: string): Promise<boolean> => {
@@ -59,7 +67,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         } else {
           resolve(false);
         }
-      }, 800); // Simulate network delay
+      }, 1000); // Simulate network delay
     });
   };
 
@@ -70,7 +78,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             setUser(newUser);
             localStorage.setItem('nursy_user', JSON.stringify(newUser));
             resolve();
-        }, 800);
+        }, 1000);
     });
   };
 
