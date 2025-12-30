@@ -15,6 +15,7 @@ interface AppContextType {
   isLoading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
+  loginWithPhoneMock: (phone: string) => Promise<void>;
   signup: (data: Omit<User, 'id'> & { password?: string }) => Promise<void>;
   logout: () => Promise<void>;
   upgradeToPro: () => void;
@@ -132,6 +133,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
   };
 
+  const loginWithPhoneMock = async (phone: string): Promise<void> => {
+    // Only used when !auth
+    console.log("Mock Mode: Phone Login...");
+    await new Promise(resolve => setTimeout(resolve, 800));
+    const mockUser: User = {
+      id: 'mock-phone-' + Date.now(),
+      name: 'Phone User',
+      email: '',
+      phone: phone,
+      subscriptionTier: 'free'
+    };
+    setUser(mockUser);
+    localStorage.setItem('nursy_mock_session', JSON.stringify(mockUser));
+    saveUserDataToLocal(mockUser.id, { name: mockUser.name, phone: phone, subscriptionTier: 'free' });
+  };
+
   const signup = async (data: Omit<User, 'id'> & { password?: string }) => {
     if (!auth) {
       // Mock Signup
@@ -206,7 +223,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   return (
-    <AppContext.Provider value={{ user, isLoading, login, loginWithGoogle, signup, logout, upgradeToPro }}>
+    <AppContext.Provider value={{ user, isLoading, login, loginWithGoogle, loginWithPhoneMock, signup, logout, upgradeToPro }}>
       {children}
     </AppContext.Provider>
   );

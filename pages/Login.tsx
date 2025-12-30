@@ -42,13 +42,13 @@ export const Login: React.FC = () => {
   const [phoneStep, setPhoneStep] = useState<PhoneStep>('input');
   const [phoneNumber, setPhoneNumber] = useState('');
   const [otpCode, setOtpCode] = useState('');
-  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | null>(null);
+  const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | any>(null);
 
   // General State
   const [error, setError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { login, loginWithGoogle } = useApp();
+  const { login, loginWithGoogle, loginWithPhoneMock } = useApp();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -102,7 +102,8 @@ export const Login: React.FC = () => {
 
   // Phone Auth Functions
   const setupRecaptcha = () => {
-    if (!auth) return;
+    if (!auth) return; // Skip if in Mock Mode
+    
     // Ensure container exists
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
@@ -124,14 +125,32 @@ export const Login: React.FC = () => {
     }
 
     setIsSubmitting(true);
-    setupRecaptcha();
 
+    // MOCK MODE for Phone
+    if (!auth) {
+      console.log("Mock Mode: Sending OTP to", phoneNumber);
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      // Fake confirmation result
+      setConfirmationResult({
+        confirm: async (code: string) => {
+          if (code === '123456') {
+             await loginWithPhoneMock(phoneNumber);
+             return { user: { uid: 'mock-phone-uid' } };
+          }
+          throw new Error("Invalid verification code");
+        }
+      });
+      setPhoneStep('otp');
+      setIsSubmitting(false);
+      return;
+    }
+
+    setupRecaptcha();
     const appVerifier = window.recaptchaVerifier;
     // Format phone number to E.164 format (Assuming Egypt +20 default if missing)
     const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+20${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
 
     try {
-      if (!auth) throw new Error("Auth not initialized");
       const confirmation = await signInWithPhoneNumber(auth, formattedPhone, appVerifier);
       setConfirmationResult(confirmation);
       setPhoneStep('otp');
@@ -170,7 +189,7 @@ export const Login: React.FC = () => {
       navigate('/dashboard');
     } catch (err: any) {
       console.error("OTP Error:", err);
-      setError('كود التحقق غير صحيح.');
+      setError('كود التحقق غير صحيح (للتجربة استخدم 123456).');
       setIsSubmitting(false);
     }
   };
@@ -338,6 +357,7 @@ export const Login: React.FC = () => {
                       maxLength={6}
                       disabled={isSubmitting}
                     />
+                    {!auth && <p className="text-xs text-brand-muted mt-2 text-center">Mock Mode: Code is 123456</p>}
                   </div>
                   <button
                     type="submit"
