@@ -9,7 +9,8 @@ import {
   onAuthStateChanged,
   updateProfile,
 } from 'firebase/auth';
-import { auth, googleProvider } from '../src/firebase';
+import { doc, setDoc, getDoc, updateDoc } from 'firebase/firestore';
+import { auth, googleProvider, db } from '../src/firebase';
 
 interface AppContextType {
   user: User | null;
@@ -66,16 +67,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('nursy_courses', JSON.stringify(updatedCourses));
   };
 
-  // --- SYNC LOGIC ---
-  const syncUserToMasterList = (userData: User) => {
+  // --- SYNC LOGIC (CLOUD) ---
+  const syncUserToCloud = async (userData: User) => {
     try {
-      const masterListStr = localStorage.getItem('nursy_all_users_index');
-      let masterList: User[] = masterListStr ? JSON.parse(masterListStr) : [];
-      masterList = masterList.filter(u => u.id !== userData.id);
-      masterList.push(userData);
-      localStorage.setItem('nursy_all_users_index', JSON.stringify(masterList));
+      // Save to Firestore "users" collection
+      // This ensures the Admin panel sees this user regardless of device
+      await setDoc(doc(db, "users", userData.id), userData, { merge: true });
     } catch (e) {
-      console.error("Failed to sync user to master list", e);
+      console.error("Failed to sync user to cloud", e);
     }
   };
 
@@ -90,19 +89,22 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return userData;
   };
 
-  const getStoredUserData = (uid: string) => {
+  const getStoredUserData = async (uid: string) => {
     try {
+      // Try fetching from Cloud first
+      const docRef = doc(db, "users", uid);
+      const docSnap = await getDoc(docRef);
+      
+      if (docSnap.exists()) {
+        return docSnap.data() as User;
+      }
+      
+      // Fallback to LocalStorage
       const data = localStorage.getItem(`nursy_user_data_${uid}`);
       return data ? JSON.parse(data) : null;
     } catch (e) {
       return null;
     }
-  };
-
-  const saveUserDataToLocal = (uid: string, data: Partial<User>) => {
-    const current = getStoredUserData(uid) || {};
-    const fullData = { ...current, ...data };
-    localStorage.setItem(`nursy_user_data_${uid}`, JSON.stringify(fullData));
   };
 
   useEffect(() => {
@@ -118,36 +120,32 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     // 2. Real Firebase Listener
-    const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        const localData = getStoredUserData(firebaseUser.uid);
+        const storedData = await getStoredUserData(firebaseUser.uid);
         
         // Default mapping
         let mappedUser: User = {
           id: firebaseUser.uid,
-          name: firebaseUser.displayName || localData?.name || 'Student',
-          email: firebaseUser.email || localData?.email || '',
-          phone: firebaseUser.phoneNumber || localData?.phone || '',
-          subscriptionTier: localData?.subscriptionTier || 'free',
-          subscriptionExpiry: localData?.subscriptionExpiry
+          name: storedData?.name || firebaseUser.displayName || 'Student',
+          email: firebaseUser.email || storedData?.email || '',
+          phone: firebaseUser.phoneNumber || storedData?.phone || '',
+          subscriptionTier: storedData?.subscriptionTier || 'free',
+          subscriptionExpiry: storedData?.subscriptionExpiry
         };
 
-        // ADMIN OVERRIDE FOR GOOGLE ACCOUNT
+        // ADMIN OVERRIDE
         if (firebaseUser.email === 'toji123oodo@gmail.com') {
             mappedUser.subscriptionTier = 'pro';
-            // Set expiry to far future for admin
             mappedUser.subscriptionExpiry = new Date(new Date().setFullYear(new Date().getFullYear() + 10)).toISOString();
         }
 
         mappedUser = checkSubscriptionValidity(mappedUser);
         
-        // If local thinks Pro but validity says Free, update local
-        if (localData?.subscriptionTier === 'pro' && mappedUser.subscriptionTier === 'free') {
-            saveUserDataToLocal(firebaseUser.uid, { subscriptionTier: 'free' });
-        }
+        // Sync Latest State to Cloud
+        await syncUserToCloud(mappedUser);
 
         setUser(mappedUser);
-        syncUserToMasterList(mappedUser);
       } else {
         setUser(null);
       }
@@ -158,19 +156,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, []);
 
   const login = async (email: string, pass: string): Promise<void> => {
-    // Admin Backdoor
-    if (email === '1221' && pass === '123') {
-        const adminUser: User = {
-            id: 'master-admin-001',
-            name: 'Master Admin',
-            email: 'admin@nursy.com',
-            phone: '0000000000',
-            subscriptionTier: 'pro'
-        };
-        setUser(adminUser);
-        syncUserToMasterList(adminUser);
-        return;
-    }
     await signInWithEmailAndPassword(auth, email, pass);
   };
 
@@ -188,14 +173,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         subscriptionTier: subscriptionTier
     };
 
-    saveUserDataToLocal(firebaseUser.uid, {
-        name,
-        phone,
-        subscriptionTier
-    });
-
+    // Save initial data to cloud
+    await syncUserToCloud(newUser);
     setUser(newUser);
-    syncUserToMasterList(newUser);
   };
 
   const loginWithGoogle = async (): Promise<void> => {
@@ -211,8 +191,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         subscriptionTier: 'free'
      };
      setUser(mockUser);
-     saveUserDataToLocal(mockUser.id, { name: mockUser.name, subscriptionTier: 'free' });
-     syncUserToMasterList(mockUser);
+     localStorage.setItem('nursy_mock_session', JSON.stringify(mockUser));
   };
 
   const loginWithPhoneMock = async (phone: string): Promise<void> => {
@@ -226,13 +205,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         try { await updateProfile(auth.currentUser, { displayName: data.name }); } catch(e) {}
     }
 
-    saveUserDataToLocal(uid, {
+    const newUser = {
+        id: uid,
         name: data.name,
+        email: auth.currentUser?.email || '',
         phone: data.phone,
         subscriptionTier: data.subscriptionTier
-    });
-    
-    setUser(prev => prev ? { ...prev, ...data } : null);
+    };
+
+    await syncUserToCloud(newUser);
+    setUser(prev => prev ? { ...prev, ...data } : newUser);
   };
 
   const logout = async () => {
@@ -241,7 +223,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.removeItem('nursy_mock_session');
   };
 
-  const upgradeToPro = () => {
+  const upgradeToPro = async () => {
     if (user) {
       const expiryDate = new Date();
       expiryDate.setDate(expiryDate.getDate() + 30); 
@@ -253,11 +235,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
 
       setUser(updatedUser);
-      saveUserDataToLocal(user.id, { 
-          subscriptionTier: 'pro',
-          subscriptionExpiry: expiryDate.toISOString()
-      });
-      syncUserToMasterList(updatedUser);
+      await syncUserToCloud(updatedUser);
     }
   };
 
@@ -270,8 +248,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const updatedUser = { ...user, ...data };
     setUser(updatedUser);
-    saveUserDataToLocal(user.id, data);
-    syncUserToMasterList(updatedUser);
+    await syncUserToCloud(updatedUser);
   };
 
   return (

@@ -7,6 +7,8 @@ import {
   Trash2, Edit, Filter, Download, Calendar, RefreshCw,
   Plus, Save, X, UserPlus, Lock, Unlock, BookOpen, Image as ImageIcon
 } from 'lucide-react';
+import { collection, onSnapshot, doc, setDoc, deleteDoc, updateDoc } from 'firebase/firestore';
+import { db } from '../src/firebase';
 
 export const Admin: React.FC = () => {
   const { user, courses, addCourse, updateCourse, deleteCourse } = useApp();
@@ -57,44 +59,43 @@ export const Admin: React.FC = () => {
       image: ''
   });
 
-  // Load Real Data from localStorage Master Index
-  const loadData = () => {
-    try {
-      const storedUsers = localStorage.getItem('nursy_all_users_index');
-      if (storedUsers) {
-        const parsedUsers: User[] = JSON.parse(storedUsers);
-        setAllUsers(parsedUsers);
-        
-        // Calculate Stats
-        const now = new Date();
-        const activeSubs = parsedUsers.filter(u => {
-             if (u.subscriptionTier !== 'pro' || !u.subscriptionExpiry) return false;
-             return new Date(u.subscriptionExpiry) > now;
-        });
-
-        const expiring = activeSubs.filter(u => {
-            const expiry = new Date(u.subscriptionExpiry!);
-            const diffTime = Math.abs(expiry.getTime() - now.getTime());
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
-            return diffDays <= 5; 
-        });
-
-        setStats({
-            totalUsers: parsedUsers.length,
-            activeSubscriptions: activeSubs.length,
-            totalIncome: activeSubs.length * 50, // 50 EGP per active user
-            expiringSoon: expiring.length
-        });
-      }
-    } catch (e) {
-      console.error("Error loading admin data", e);
-    }
-  };
-
+  // --- LOAD DATA FROM FIRESTORE ---
   useEffect(() => {
-    loadData();
-    const interval = setInterval(loadData, 5000);
-    return () => clearInterval(interval);
+    // Subscribe to real-time updates from "users" collection
+    const unsubscribe = onSnapshot(collection(db, "users"), (snapshot) => {
+      const users: User[] = [];
+      snapshot.forEach((doc) => {
+        users.push(doc.data() as User);
+      });
+      
+      setAllUsers(users);
+
+      // Calculate Stats
+      const now = new Date();
+      const activeSubs = users.filter(u => {
+           if (u.subscriptionTier !== 'pro' || !u.subscriptionExpiry) return false;
+           return new Date(u.subscriptionExpiry) > now;
+      });
+
+      const expiring = activeSubs.filter(u => {
+          const expiry = new Date(u.subscriptionExpiry!);
+          const diffTime = Math.abs(expiry.getTime() - now.getTime());
+          const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)); 
+          return diffDays <= 5; 
+      });
+
+      setStats({
+          totalUsers: users.length,
+          activeSubscriptions: activeSubs.length,
+          totalIncome: activeSubs.length * 50, // 50 EGP per active user
+          expiringSoon: expiring.length
+      });
+    }, (error) => {
+      console.error("Error fetching users:", error);
+      showNotification('error', 'فشل في تحميل بيانات المستخدمين');
+    });
+
+    return () => unsubscribe();
   }, []);
 
   const showNotification = (type: 'success' | 'error', text: string) => {
@@ -102,20 +103,21 @@ export const Admin: React.FC = () => {
     setTimeout(() => setNotification(null), 3000);
   };
 
-  // --- USER OPERATIONS ---
+  // --- USER OPERATIONS (FIRESTORE) ---
 
-  const handleAddUser = (e: React.FormEvent) => {
+  const handleAddUser = async (e: React.FormEvent) => {
       e.preventDefault();
       
-      // Check duplicate email
+      // Check duplicate email (client-side check from loaded list)
       if (allUsers.find(u => u.email === formData.email)) {
           showNotification('error', 'هذا البريد الإلكتروني مسجل بالفعل');
           return;
       }
 
       // Create New User Object
+      const userId = `manual-user-${Date.now()}`;
       const newUser: User = {
-          id: `manual-user-${Date.now()}`,
+          id: userId,
           name: formData.name,
           email: formData.email,
           phone: formData.phone,
@@ -125,20 +127,17 @@ export const Admin: React.FC = () => {
             : undefined
       };
 
-      // Save to Master Index
-      const newAllUsers = [...allUsers, newUser];
-      localStorage.setItem('nursy_all_users_index', JSON.stringify(newAllUsers));
-
-      // Save to User Specific Storage (Simulating DB record creation)
-      localStorage.setItem(`nursy_user_data_${newUser.id}`, JSON.stringify(newUser));
-
-      loadData();
-      setIsAddModalOpen(false);
-      resetForm();
-      showNotification('success', 'تم إضافة العضو الجديد بنجاح');
+      try {
+        await setDoc(doc(db, "users", userId), newUser);
+        setIsAddModalOpen(false);
+        resetForm();
+        showNotification('success', 'تم إضافة العضو الجديد بنجاح');
+      } catch (error) {
+        showNotification('error', 'حدث خطأ أثناء الإضافة');
+      }
   };
 
-  const handleUpdateUser = (e: React.FormEvent) => {
+  const handleUpdateUser = async (e: React.FormEvent) => {
       e.preventDefault();
       if (!editingUser) return;
 
@@ -152,31 +151,25 @@ export const Admin: React.FC = () => {
              : undefined
       };
 
-      // Update in Master List
-      const newAllUsers = allUsers.map(u => u.id === editingUser.id ? updatedUser : u);
-      localStorage.setItem('nursy_all_users_index', JSON.stringify(newAllUsers));
-      
-      // Update User Specific Data
-      const userKey = `nursy_user_data_${updatedUser.id}`;
-      const existingData = localStorage.getItem(userKey);
-      const newData = existingData ? { ...JSON.parse(existingData), ...updatedUser } : updatedUser;
-      localStorage.setItem(userKey, JSON.stringify(newData));
-
-      loadData();
-      setEditingUser(null);
-      resetForm();
-      showNotification('success', 'تم تحديث بيانات العضو والصلاحيات');
+      try {
+        await setDoc(doc(db, "users", editingUser.id), updatedUser, { merge: true });
+        setEditingUser(null);
+        resetForm();
+        showNotification('success', 'تم تحديث بيانات العضو والصلاحيات');
+      } catch (error) {
+        showNotification('error', 'حدث خطأ أثناء التحديث');
+      }
   };
 
-  const handleDeleteUser = (userId: string) => {
+  const handleDeleteUser = async (userId: string) => {
       if(!window.confirm("هل أنت متأكد من حذف هذا المستخدم؟ لا يمكن التراجع.")) return;
 
-      const newAllUsers = allUsers.filter(u => u.id !== userId);
-      localStorage.setItem('nursy_all_users_index', JSON.stringify(newAllUsers));
-      localStorage.removeItem(`nursy_user_data_${userId}`);
-      
-      loadData();
-      showNotification('success', 'تم حذف المستخدم');
+      try {
+        await deleteDoc(doc(db, "users", userId));
+        showNotification('success', 'تم حذف المستخدم');
+      } catch (error) {
+        showNotification('error', 'حدث خطأ أثناء الحذف');
+      }
   };
 
   // --- COURSE OPERATIONS ---
@@ -281,7 +274,7 @@ export const Admin: React.FC = () => {
       });
   };
 
-  const handleManualActivation = (emailToActivate: string) => {
+  const handleManualActivation = async (emailToActivate: string) => {
     const targetUser = allUsers.find(u => u.email === emailToActivate || u.phone === emailToActivate);
     
     if (targetUser) {
@@ -295,19 +288,13 @@ export const Admin: React.FC = () => {
             subscriptionExpiry: expiryDate.toISOString() 
         };
 
-        // Update in Master List
-        const newAllUsers = allUsers.map(u => u.id === targetUser.id ? updatedUser : u);
-        localStorage.setItem('nursy_all_users_index', JSON.stringify(newAllUsers));
-        
-        // Update in User Specific Storage
-        const userKey = `nursy_user_data_${targetUser.id}`;
-        const existingData = localStorage.getItem(userKey);
-        const newData = existingData ? { ...JSON.parse(existingData), ...updatedUser } : updatedUser;
-        localStorage.setItem(userKey, JSON.stringify(newData));
-
-        loadData();
-        showNotification('success', `تم تفعيل الاشتراك للطالب ${targetUser.name} بنجاح`);
-        setSearchTerm('');
+        try {
+            await setDoc(doc(db, "users", targetUser.id), updatedUser, { merge: true });
+            showNotification('success', `تم تفعيل الاشتراك للطالب ${targetUser.name} بنجاح`);
+            setSearchTerm('');
+        } catch (error) {
+            showNotification('error', 'حدث خطأ أثناء التفعيل');
+        }
     } else {
         showNotification('error', 'المستخدم غير موجود.');
     }
@@ -346,7 +333,7 @@ export const Admin: React.FC = () => {
                 <div>
                     <h1 className="text-2xl md:text-3xl font-black text-white">لوحة التحكم</h1>
                     <p className="text-brand-muted text-sm flex items-center gap-2">
-                        <span>إحصائيات حقيقية</span>
+                        <span>إحصائيات حقيقية (Cloud)</span>
                         <span className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse"></span>
                     </p>
                 </div>
@@ -497,9 +484,6 @@ export const Admin: React.FC = () => {
                             >
                                 <Plus size={18} />
                                 <span className="hidden md:inline">إضافة عضو</span>
-                            </button>
-                            <button onClick={loadData} className="bg-brand-main border border-white/10 p-2.5 rounded-lg text-brand-muted hover:text-white hover:border-brand-gold" title="تحديث البيانات">
-                                <RefreshCw size={20} />
                             </button>
                         </div>
                     </div>

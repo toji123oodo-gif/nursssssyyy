@@ -1,5 +1,6 @@
 import { initializeApp } from 'firebase/app';
 import { getAuth, GoogleAuthProvider } from 'firebase/auth';
+import { getFirestore } from 'firebase/firestore'; // Import Firestore
 import { getAnalytics, isSupported } from 'firebase/analytics';
 
 // Firebase configuration provided
@@ -21,6 +22,9 @@ const auth = getAuth(app);
 // Set language to Arabic for SMS and ReCaptcha
 auth.languageCode = 'ar'; 
 
+// Initialize Firestore (Database)
+const db = getFirestore(app);
+
 // Initialize Google Provider (Exported to maintain type compatibility)
 const googleProvider = new GoogleAuthProvider();
 
@@ -34,4 +38,4 @@ isSupported().then(yes => {
   console.warn("Firebase Analytics is not supported in this environment:", err);
 });
 
-export { auth, googleProvider, analytics };
+export { auth, db, googleProvider, analytics };
