@@ -60,7 +60,7 @@ export const Login: React.FC = () => {
 
     try {
       await login(email, password);
-      navigate('/dashboard');
+      navigate('/welcome');
     } catch (err: any) {
       console.error(err);
       if (err.code === 'auth/invalid-credential' || err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
@@ -82,7 +82,7 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await loginWithGoogle();
-      navigate('/dashboard');
+      navigate('/welcome');
     } catch (err: any) {
       console.error("Google Login Error:", err);
       if (err.code === 'auth/unauthorized-domain') {
@@ -171,7 +171,7 @@ export const Login: React.FC = () => {
 
     try {
       await confirmationResult.confirm(otpCode);
-      navigate('/dashboard');
+      navigate('/welcome');
     } catch (err: any) {
       console.error("OTP Error:", err);
       setError('كود التحقق غير صحيح.');
@@ -234,7 +234,7 @@ export const Login: React.FC = () => {
                  <div className="mt-3 pt-3 border-t border-white/10 animate-fade-in">
                     <p className="text-xs text-brand-muted mb-2">هل تريد المتابعة في الوضع التجريبي؟</p>
                     <button 
-                        onClick={() => { loginWithGoogleMock(); navigate('/dashboard'); }}
+                        onClick={() => { loginWithGoogleMock(); navigate('/welcome'); }}
                         className="bg-brand-gold text-brand-main text-xs font-bold py-2 px-4 rounded-lg hover:bg-brand-goldHover transition-colors flex items-center gap-2 w-full justify-center"
                     >
                         <Unlock size={14} />

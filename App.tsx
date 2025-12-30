@@ -12,6 +12,7 @@ import { Admin } from './pages/Admin';
 import { Profile } from './pages/Profile';
 import { HelpCenter } from './pages/HelpCenter';
 import { CourseDetail } from './pages/CourseDetail';
+import { Welcome } from './pages/Welcome';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -45,6 +46,14 @@ const AppContent: React.FC = () => {
           <Route path="/help" element={<HelpCenter />} />
           
           {/* Protected Routes */}
+          <Route 
+            path="/welcome" 
+            element={
+              <ProtectedRoute>
+                <Welcome />
+              </ProtectedRoute>
+            } 
+          />
           <Route 
             path="/dashboard" 
             element={

@@ -43,7 +43,7 @@ export const Signup: React.FC = () => {
             formData.phone, 
             selectedPlan
         );
-        navigate('/dashboard');
+        navigate('/welcome');
     } catch (err: any) {
         console.error(err);
         if (err.code === 'auth/email-already-in-use') {
