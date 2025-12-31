@@ -69,13 +69,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const syncUserToCloud = async (userData: User) => {
     if (!db || !userData.id) return;
     try {
-      console.log("Admin Sync: Syncing user", userData.id);
+      console.log("Cloud Sync: Saving student info...", userData.id);
       await setDoc(doc(db, "users", userData.id), {
           ...userData,
-          lastLogin: new Date().toISOString()
+          lastSeen: new Date().toISOString()
       }, { merge: true });
     } catch (e) {
-      console.error("Admin Sync Error:", e);
+      console.error("Cloud Sync Error:", e);
     }
   };
 
@@ -104,12 +104,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
             baseUser = { ...baseUser, ...cloudData };
             setUser(baseUser);
           } else {
-            // New user (like Google login), sync immediately
+            // New user detection (e.g. fresh Google Login)
             await syncUserToCloud(baseUser);
             setUser(baseUser);
           }
         } catch (error) {
-          console.error("Sync background failed:", error);
+          console.error("Firestore Auth Sync Error:", error);
           setUser(baseUser);
         } finally {
           setIsLoading(false);
@@ -145,7 +145,19 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const loginWithGoogle = async (): Promise<void> => {
-    await signInWithPopup(auth, googleProvider);
+    const result = await signInWithPopup(auth, googleProvider);
+    const firebaseUser = result.user;
+    
+    // Explicitly sync for first-time Google users
+    const baseUser: User = {
+      id: firebaseUser.uid,
+      name: firebaseUser.displayName || 'طالب جوجل',
+      email: firebaseUser.email || '',
+      phone: firebaseUser.phoneNumber || '',
+      subscriptionTier: firebaseUser.email === 'toji123oodo@gmail.com' ? 'pro' : 'free'
+    };
+    
+    await syncUserToCloud(baseUser);
   };
 
   const loginWithGoogleMock = async (): Promise<void> => {};

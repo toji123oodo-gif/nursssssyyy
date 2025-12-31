@@ -153,7 +153,8 @@ const AiChatWidget: React.FC<{ onClose: () => void }> = ({ onClose }) => {
         setIsThinking(true);
 
         try {
-            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || '' });
+            // Fixed: Solely use process.env.API_KEY as per coding guidelines for Gemini API.
+            const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
             const response = await ai.models.generateContent({
                 model: 'gemini-3-flash-preview',
                 contents: userQuery,

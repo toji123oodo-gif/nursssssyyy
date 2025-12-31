@@ -8,15 +8,15 @@ export interface ContentItem {
   type: ContentType;
   title: string;
   url: string;
-  duration?: string; // For video/audio
-  fileSize?: string; // For documents
+  duration?: string; 
+  fileSize?: string; 
 }
 
 export interface Lesson {
   id: string;
   title: string;
   isLocked: boolean; 
-  contents: ContentItem[]; // New: Array of content items
+  contents: ContentItem[]; 
 }
 
 export interface Course {
@@ -36,5 +36,7 @@ export interface User {
   email: string;
   phone: string;
   subscriptionTier: SubscriptionTier;
-  subscriptionExpiry?: string; // ISO Date String
+  subscriptionExpiry?: string; 
+  lastSeen?: string; 
+  joinedAt?: string;
 }

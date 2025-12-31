@@ -1,10 +1,10 @@
 
-import React, { useState, useEffect } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { LogIn, GraduationCap, AlertCircle, Smartphone, Mail, ArrowRight, CheckCircle, Unlock, User } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { LogIn, GraduationCap, AlertCircle, Smartphone, Mail, Unlock } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
-import { auth } from '../src/firebase';
+import { auth } from '../firebase'; // Fixed import from root
 
 declare global {
   interface Window {
@@ -44,7 +44,7 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate('/dashboard'); // Direct to dashboard
+      navigate('/dashboard');
     } catch (err: any) {
       setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
       setIsSubmitting(false);
@@ -56,8 +56,9 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await loginWithGoogle();
-      navigate('/dashboard'); // Direct to dashboard
+      navigate('/dashboard');
     } catch (err: any) {
+      console.error(err);
       setError('فشل تسجيل الدخول باستخدام جوجل.');
       setIsSubmitting(false);
     }
@@ -101,7 +102,7 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await confirmationResult.confirm(otpCode);
-      navigate('/dashboard'); // Direct to dashboard
+      navigate('/dashboard');
     } catch (err: any) {
       setError('كود التحقق غير صحيح.');
       setIsSubmitting(false);
@@ -261,9 +262,19 @@ export const Login: React.FC = () => {
             <div className="relative flex justify-center text-sm"><span className="px-4 bg-brand-card text-brand-muted font-bold text-xs">أو المتابعة عبر</span></div>
           </div>
 
-          <button onClick={handleGoogleLogin} disabled={isSubmitting} className="w-full bg-white text-gray-900 font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl">
-            <GoogleIcon />
-            <span>Google</span>
+          <button 
+            onClick={handleGoogleLogin} 
+            disabled={isSubmitting} 
+            className="w-full bg-white text-gray-900 font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl hover:bg-gray-50 transition-colors disabled:opacity-50"
+          >
+            {isSubmitting ? (
+              <div className="w-5 h-5 border-2 border-gray-900 border-t-transparent rounded-full animate-spin"></div>
+            ) : (
+              <>
+                <GoogleIcon />
+                <span>Google</span>
+              </>
+            )}
           </button>
         </div>
       </div>
