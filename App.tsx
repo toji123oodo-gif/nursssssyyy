@@ -18,7 +18,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { user, isLoading } = useApp();
   const location = useLocation();
 
-  // Return nothing instead of a loader to keep the UI clean while auth state resolves
   if (isLoading && !user) return null; 
 
   if (!user) {
@@ -38,7 +37,6 @@ const AppContent: React.FC = () => {
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/help" element={<HelpCenter />} />
           
-          {/* Protected Routes - Direct to dashboard */}
           <Route 
             path="/dashboard" 
             element={
