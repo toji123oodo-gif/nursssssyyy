@@ -18,7 +18,7 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   const { user, isLoading } = useApp();
   const location = useLocation();
 
-  // Completely removed the Loader component to prevent any "stuck" screens
+  // Return nothing instead of a loader to keep the UI clean while auth state resolves
   if (isLoading && !user) return null; 
 
   if (!user) {
@@ -38,7 +38,7 @@ const AppContent: React.FC = () => {
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/help" element={<HelpCenter />} />
           
-          {/* Protected Routes - All now redirect directly to dashboard */}
+          {/* Protected Routes - Direct to dashboard */}
           <Route 
             path="/dashboard" 
             element={
@@ -72,7 +72,6 @@ const AppContent: React.FC = () => {
             } 
           />
           
-          {/* Default redirect for legacy /welcome links to dashboard */}
           <Route path="/welcome" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
        </Routes>

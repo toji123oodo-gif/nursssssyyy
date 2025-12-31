@@ -71,19 +71,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       await setDoc(doc(db, "users", userData.id), userData, { merge: true });
     } catch (e) {
-      console.error("Failed to sync user to cloud", e);
+      console.error("Cloud Sync Error:", e);
     }
-  };
-
-  const checkSubscriptionValidity = (userData: User): User => {
-    if (userData.subscriptionTier === 'pro' && userData.subscriptionExpiry) {
-      const now = new Date();
-      const expiry = new Date(userData.subscriptionExpiry);
-      if (now > expiry) {
-        return { ...userData, subscriptionTier: 'free' };
-      }
-    }
-    return userData;
   };
 
   useEffect(() => {
@@ -94,8 +83,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       if (firebaseUser) {
-        // 1. Create immediate local user
-        const localUser: User = {
+        // Step 1: Set immediate local user state to unblock UI
+        const baseUser: User = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || 'طالب جديد',
           email: firebaseUser.email || '',
@@ -103,25 +92,23 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           subscriptionTier: firebaseUser.email === 'toji123oodo@gmail.com' ? 'pro' : 'free'
         };
         
-        setUser(localUser);
-        setIsLoading(false); // Unblock UI immediately
+        setUser(baseUser);
+        setIsLoading(false); // NO MORE LOADING PAGE
 
-        // 2. Background: Fetch or Create in Firestore
+        // Step 2: Background - Ensure user is in Firestore
         try {
           const docRef = doc(db, "users", firebaseUser.uid);
           const docSnap = await getDoc(docRef);
           
           if (docSnap.exists()) {
-            // User exists, update local state with Cloud data
-            let cloudData = docSnap.data() as User;
-            cloudData = checkSubscriptionValidity(cloudData);
+            const cloudData = docSnap.data() as User;
             setUser(cloudData);
           } else {
-            // NEW USER: Save to Firestore immediately so they appear in Admin
-            await syncUserToCloud(localUser);
+            // If they don't exist (new Google login for example), create them now
+            await syncUserToCloud(baseUser);
           }
-        } catch (e) {
-          console.error("Error in background sync:", e);
+        } catch (error) {
+          console.error("Firestore background check failed:", error);
         }
       } else {
         setUser(null);
@@ -160,9 +147,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const loginWithGoogleMock = async (): Promise<void> => {
     const mockUser: User = {
         id: 'google-mock-user-001',
-        name: 'Demo Google User',
-        email: 'demo.user@gmail.com',
-        phone: '0000000000',
+        name: 'Demo User',
+        email: 'demo@gmail.com',
+        phone: '0000',
         subscriptionTier: 'free'
      };
      setUser(mockUser);
