@@ -6,7 +6,6 @@ import { useApp } from '../context/AppContext';
 import { RecaptchaVerifier, signInWithPhoneNumber, ConfirmationResult } from 'firebase/auth';
 import { auth } from '../src/firebase';
 
-// Fix: Adding global interface augmentation for window.recaptchaVerifier to fix TypeScript error "Property 'recaptchaVerifier' does not exist on type 'Window'"
 declare global {
   interface Window {
     recaptchaVerifier: any;
@@ -15,22 +14,10 @@ declare global {
 
 const GoogleIcon = () => (
   <svg className="w-5 h-5" viewBox="0 0 24 24">
-    <path
-      fill="currentColor"
-      d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-    />
-    <path
-      fill="currentColor"
-      d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-    />
-    <path
-      fill="currentColor"
-      d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-    />
-    <path
-      fill="currentColor"
-      d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-    />
+    <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+    <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+    <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+    <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
   </svg>
 );
 
@@ -46,11 +33,9 @@ export const Login: React.FC = () => {
   const [otpCode, setOtpCode] = useState('');
   const [confirmationResult, setConfirmationResult] = useState<ConfirmationResult | any>(null);
   const [error, setError] = useState('');
-  const [errorDetails, setErrorDetails] = useState(''); 
-  const [showMockGoogle, setShowMockGoogle] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { login, loginWithGoogle, loginWithGoogleMock } = useApp();
+  const { login, loginWithGoogle } = useApp();
   const navigate = useNavigate();
 
   const handleEmailLogin = async (e: React.FormEvent) => {
@@ -59,13 +44,9 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await login(email, password);
-      navigate('/welcome');
+      navigate('/dashboard'); // Direct to dashboard
     } catch (err: any) {
-      if (err.code === 'auth/invalid-credential') {
-        setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
-      } else {
-        setError('حدث خطأ أثناء تسجيل الدخول');
-      }
+      setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
       setIsSubmitting(false);
     }
   };
@@ -75,21 +56,15 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await loginWithGoogle();
-      // AppContext handles the redirect after observer catches the user
+      navigate('/dashboard'); // Direct to dashboard
     } catch (err: any) {
-      if (err.code === 'auth/unauthorized-domain') {
-        setError('النطاق الحالي غير مصرح به.');
-        setShowMockGoogle(true);
-      } else {
-        setError('فشل تسجيل الدخول باستخدام جوجل.');
-      }
+      setError('فشل تسجيل الدخول باستخدام جوجل.');
       setIsSubmitting(false);
     }
   };
 
   const setupRecaptcha = () => {
     if (!auth) return;
-    // Fix: Using type-safe access to recaptchaVerifier on window via global declaration
     if (!window.recaptchaVerifier) {
       window.recaptchaVerifier = new RecaptchaVerifier(auth, 'recaptcha-container', {
         'size': 'invisible',
@@ -107,7 +82,6 @@ export const Login: React.FC = () => {
     }
     setIsSubmitting(true);
     setupRecaptcha();
-    // Fix: Using type-safe access to recaptchaVerifier on window via global declaration
     const appVerifier = window.recaptchaVerifier;
     const formattedPhone = phoneNumber.startsWith('+') ? phoneNumber : `+20${phoneNumber.startsWith('0') ? phoneNumber.substring(1) : phoneNumber}`;
     try {
@@ -127,7 +101,7 @@ export const Login: React.FC = () => {
     setIsSubmitting(true);
     try {
       await confirmationResult.confirm(otpCode);
-      navigate('/welcome');
+      navigate('/dashboard'); // Direct to dashboard
     } catch (err: any) {
       setError('كود التحقق غير صحيح.');
       setIsSubmitting(false);
@@ -177,9 +151,6 @@ export const Login: React.FC = () => {
             <div className="bg-red-500/10 border border-red-500/20 text-red-400 p-4 rounded-2xl text-sm font-bold animate-fade-in mb-8 relative z-10 flex items-center gap-3">
               <AlertCircle size={20} />
               <span>{error}</span>
-              {showMockGoogle && (
-                <button onClick={() => { loginWithGoogleMock(); navigate('/welcome'); }} className="mr-auto bg-brand-gold text-brand-main px-3 py-1 rounded-lg text-xs">Mock Login</button>
-              )}
             </div>
           )}
 
@@ -261,14 +232,7 @@ export const Login: React.FC = () => {
                     disabled={isSubmitting}
                     className="w-full bg-brand-gold text-brand-main font-black py-4.5 rounded-2xl hover:bg-brand-goldHover transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50"
                   >
-                    {isSubmitting ? (
-                      <div className="w-6 h-6 border-2 border-brand-main border-t-transparent rounded-full animate-spin"></div>
-                    ) : (
-                      <>
-                        <span className="text-lg">إرسال الرمز</span>
-                        <ArrowRight size={22} className="rotate-180" />
-                      </>
-                    )}
+                    إرسال الرمز
                   </button>
                 </form>
               ) : (
@@ -280,19 +244,13 @@ export const Login: React.FC = () => {
                       required
                       value={otpCode}
                       onChange={(e) => setOtpCode(e.target.value)}
-                      className="w-full bg-brand-main border border-brand-gold/40 rounded-2xl px-4 py-5 text-center text-white text-3xl font-mono tracking-[0.5em] placeholder:text-brand-muted/20 focus:border-brand-gold outline-none transition-all shadow-2xl"
+                      className="w-full bg-brand-main border border-brand-gold/40 rounded-2xl px-4 py-5 text-center text-white text-3xl font-mono tracking-[0.5em] focus:border-brand-gold outline-none transition-all shadow-2xl"
                       placeholder="------"
                       maxLength={6}
                       disabled={isSubmitting}
                     />
                   </div>
-                  <button
-                    type="submit"
-                    disabled={isSubmitting}
-                    className="w-full bg-brand-gold text-brand-main font-black py-4.5 rounded-2xl hover:bg-brand-goldHover transition-all shadow-glow flex items-center justify-center gap-3 disabled:opacity-50"
-                  >
-                    تأكيد الرمز
-                  </button>
+                  <button type="submit" disabled={isSubmitting} className="w-full bg-brand-gold text-brand-main font-black py-4.5 rounded-2xl">تأكيد الرمز</button>
                 </form>
               )}
             </div>
@@ -303,21 +261,10 @@ export const Login: React.FC = () => {
             <div className="relative flex justify-center text-sm"><span className="px-4 bg-brand-card text-brand-muted font-bold text-xs">أو المتابعة عبر</span></div>
           </div>
 
-          <button
-            onClick={handleGoogleLogin}
-            disabled={isSubmitting}
-            className="w-full bg-white text-gray-900 font-black py-4 rounded-2xl hover:bg-gray-100 transition-all flex items-center justify-center gap-3 relative z-10 shadow-xl active:scale-95"
-          >
+          <button onClick={handleGoogleLogin} disabled={isSubmitting} className="w-full bg-white text-gray-900 font-black py-4 rounded-2xl flex items-center justify-center gap-3 shadow-xl">
             <GoogleIcon />
             <span>Google</span>
           </button>
-
-          <div className="mt-10 pt-8 border-t border-white/5 text-center relative z-10">
-            <p className="text-brand-muted text-sm font-medium">
-              ليس لديك حساب؟{' '}
-              <Link to="/signup" className="text-brand-gold font-black hover:underline mr-1">أنشئ حساب جديد</Link>
-            </p>
-          </div>
         </div>
       </div>
     </div>

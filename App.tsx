@@ -3,7 +3,6 @@ import React from 'react';
 import { HashRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AppProvider, useApp } from './context/AppContext';
 import { Layout } from './components/Layout';
-import { Loader } from './components/Loader';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { Wallet } from './pages/Wallet';
@@ -13,15 +12,14 @@ import { Admin } from './pages/Admin';
 import { Profile } from './pages/Profile';
 import { HelpCenter } from './pages/HelpCenter';
 import { CourseDetail } from './pages/CourseDetail';
-import { Welcome } from './pages/Welcome';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useApp();
   const location = useLocation();
 
-  // We only show loader briefly if we are explicitly waiting for auth check on a protected page
-  if (isLoading && !user) return <Loader />;
+  // Completely removed the Loader component to prevent any "stuck" screens
+  if (isLoading && !user) return null; 
 
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />;
@@ -31,7 +29,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const AppContent: React.FC = () => {
-  // Removed global isLoading check to prevent getting stuck
   return (
     <Layout>
        <Routes>
@@ -41,15 +38,7 @@ const AppContent: React.FC = () => {
           <Route path="/course/:courseId" element={<CourseDetail />} />
           <Route path="/help" element={<HelpCenter />} />
           
-          {/* Protected Routes */}
-          <Route 
-            path="/welcome" 
-            element={
-              <ProtectedRoute>
-                <Welcome />
-              </ProtectedRoute>
-            } 
-          />
+          {/* Protected Routes - All now redirect directly to dashboard */}
           <Route 
             path="/dashboard" 
             element={
@@ -83,6 +72,8 @@ const AppContent: React.FC = () => {
             } 
           />
           
+          {/* Default redirect for legacy /welcome links to dashboard */}
+          <Route path="/welcome" element={<Navigate to="/dashboard" replace />} />
           <Route path="*" element={<Navigate to="/" replace />} />
        </Routes>
     </Layout>
