@@ -5,7 +5,6 @@ import 'firebase/compat/firestore';
 import 'firebase/compat/analytics';
 
 // Firebase configuration
-// تم استخدام القيم الموفرة للمشروع مع إمكانية القراءة من متغيرات البيئة لسهولة الإدارة
 const firebaseConfig = {
   apiKey: "AIzaSyCgk9AqmGYf6O2mtuMzseOrjtqRWPNJn0U",
   authDomain: "nursssssssyyy.firebaseapp.com",
@@ -21,14 +20,24 @@ const app = !firebase.apps.length ? firebase.initializeApp(firebaseConfig) : fir
 
 // Initialize Auth
 const auth = firebase.auth();
-auth.languageCode = 'ar'; // تعيين اللغة للعربية لرسائل التحقق
+auth.languageCode = 'ar'; 
 
-// Initialize Firestore
+// Initialize Firestore with settings
 const db = firebase.firestore();
+
+// Enable offline persistence to mitigate "client is offline" errors
+if (typeof window !== 'undefined') {
+  db.enablePersistence({ synchronizeTabs: true }).catch((err) => {
+    if (err.code === 'failed-precondition') {
+      console.warn("Multiple tabs open, persistence can only be enabled in one tab at a time.");
+    } else if (err.code === 'unimplemented') {
+      console.warn("The current browser doesn't support all of the features required to enable persistence");
+    }
+  });
+}
 
 // Initialize Google Provider
 const googleProvider = new firebase.auth.GoogleAuthProvider();
-// تخصيص المطالبة بالحساب لضمان ظهور نافذة اختيار الحساب دائماً
 googleProvider.setCustomParameters({
   prompt: 'select_account'
 });

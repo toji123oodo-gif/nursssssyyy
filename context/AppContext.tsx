@@ -2,7 +2,6 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, SubscriptionTier, Course } from '../types';
 import { courses as defaultCourses } from '../data/courses';
-// Fix: Using compat version for namespaced Firebase v8 support to resolve property access errors
 import firebase from 'firebase/compat/app';
 import { auth, googleProvider, db } from '../firebase';
 
@@ -28,7 +27,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
 
-  // Function to get clean device info
   const getDeviceInfo = () => {
     const ua = navigator.userAgent;
     let device = "متصفح غير معروف";
@@ -37,48 +35,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     else if (ua.match(/Windows/i)) device = "Windows PC";
     else if (ua.match(/Macintosh/i)) device = "MacBook";
     else if (ua.match(/Linux/i)) device = "Linux System";
-    
     return device;
   };
 
   useEffect(() => {
     if (!db) return;
 
-    const unsubscribe = db.collection("courses").onSnapshot((snapshot) => {
-      if (snapshot.empty) {
-        console.log("Firestore: Seeding default courses...");
-        const batch = db.batch();
-        defaultCourses.forEach((c) => {
-          const ref = db.collection("courses").doc(c.id);
-          batch.set(ref, c);
-        });
-        batch.commit();
-      } else {
-        const cloudCourses: Course[] = [];
-        snapshot.forEach((doc) => {
-          cloudCourses.push({ id: doc.id, ...doc.data() } as Course);
-        });
-        setCourses(cloudCourses);
+    // Use a try-catch wrapped listener for courses
+    const unsubscribe = db.collection("courses").onSnapshot(
+      (snapshot) => {
+        if (snapshot.empty) {
+          const batch = db.batch();
+          defaultCourses.forEach((c) => {
+            const ref = db.collection("courses").doc(c.id);
+            batch.set(ref, c);
+          });
+          batch.commit().catch(e => console.error("Initial seed failed:", e));
+        } else {
+          const cloudCourses: Course[] = [];
+          snapshot.forEach((doc) => {
+            cloudCourses.push({ id: doc.id, ...doc.data() } as Course);
+          });
+          setCourses(cloudCourses);
+        }
+      },
+      (error) => {
+        console.error("Courses Snapshot Error:", error);
+        // Fallback to default data if Firestore fails
+        setCourses(defaultCourses);
       }
-    });
+    );
 
     return () => unsubscribe();
   }, []);
-
-  const addAdminNotification = async (type: 'enrollment' | 'payment' | 'support', message: string, userName: string) => {
-    if (!db) return;
-    try {
-      await db.collection("admin_notifications").add({
-        type,
-        message,
-        userName,
-        timestamp: new Date().toISOString(),
-        read: false
-      });
-    } catch (e) {
-      console.error("Failed to push admin notification", e);
-    }
-  };
 
   const syncUserToCloud = async (userData: User) => {
     if (!db || !userData.id) return;
@@ -86,10 +75,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await db.collection("users").doc(userData.id).set({
           ...userData,
           lastSeen: new Date().toISOString(),
-          lastDevice: getDeviceInfo() // Capture device on every sync
+          lastDevice: getDeviceInfo()
       }, { merge: true });
     } catch (e) {
-      console.error("User Sync Error:", e);
+      console.warn("User Sync delayed (Offline):", e);
+      // Data will sync automatically once online due to enabled persistence
     }
   };
 
@@ -102,11 +92,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         try {
+          // Attempt to fetch user with a timeout or local-first approach
           const docRef = db.collection("users").doc(firebaseUser.uid);
-          const docSnap = await docRef.get();
+          
+          // Get data - Firestore with persistence will return local data if offline
+          const docSnap = await docRef.get().catch(err => {
+            console.warn("Firestore fetch failed, using auth profile as fallback:", err);
+            return null;
+          });
           
           let baseUser: User;
-          if (docSnap.exists) {
+          if (docSnap && docSnap.exists) {
             baseUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
           } else {
             baseUser = {
@@ -117,11 +113,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               subscriptionTier: firebaseUser.email === 'toji123oodo@gmail.com' ? 'pro' : 'free'
             };
           }
-          // Always sync to update lastSeen and lastDevice
-          await syncUserToCloud(baseUser);
+          
           setUser(baseUser);
+          syncUserToCloud(baseUser);
         } catch (error) {
-          console.error("Auth Sync Error:", error);
+          console.error("Auth Processing Error:", error);
         } finally {
           setIsLoading(false);
         }
@@ -134,64 +130,42 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, pass: string): Promise<void> => {
-    try {
-      await auth.signInWithEmailAndPassword(email, pass);
-    } catch (error) {
-      throw error;
-    }
+  const login = async (email: string, pass: string) => {
+    await auth.signInWithEmailAndPassword(email, pass);
   };
 
   const signup = async (email: string, pass: string, name: string, phone: string, subscriptionTier: SubscriptionTier) => {
-    try {
-      const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
-      const firebaseUser = userCredential.user;
-      if (firebaseUser) {
-        await firebaseUser.updateProfile({ displayName: name });
-        const newUser: User = {
-            id: firebaseUser.uid,
-            name: name,
-            email: email,
-            phone: phone,
-            subscriptionTier: subscriptionTier
-        };
-        await syncUserToCloud(newUser);
-        setUser(newUser);
-        addAdminNotification('enrollment', `قام ${name} بإنشاء حساب جديد بالبريد الإلكتروني.`, name);
-      }
-    } catch (error) {
-      throw error;
+    const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
+    const firebaseUser = userCredential.user;
+    if (firebaseUser) {
+      await firebaseUser.updateProfile({ displayName: name });
+      const newUser: User = { id: firebaseUser.uid, name, email, phone, subscriptionTier };
+      setUser(newUser);
+      syncUserToCloud(newUser);
     }
   };
 
-  const loginWithGoogle = async (): Promise<void> => {
-    try {
-      const result = await auth.signInWithPopup(googleProvider);
-      const firebaseUser = result.user;
-      
-      if (firebaseUser) {
+  const loginWithGoogle = async () => {
+    const result = await auth.signInWithPopup(googleProvider);
+    const firebaseUser = result.user;
+    if (firebaseUser) {
         const docRef = db.collection("users").doc(firebaseUser.uid);
-        const docSnap = await docRef.get();
+        const docSnap = await docRef.get().catch(() => null);
         
-        if (!docSnap.exists) {
-            const baseUser: User = {
+        let baseUser: User;
+        if (docSnap && docSnap.exists) {
+            baseUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
+        } else {
+            baseUser = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || 'طالب جوجل',
               email: firebaseUser.email || '',
               phone: firebaseUser.phoneNumber || '',
               subscriptionTier: firebaseUser.email === 'toji123oodo@gmail.com' ? 'pro' : 'free'
             };
-            await syncUserToCloud(baseUser);
-            addAdminNotification('enrollment', `قام ${baseUser.name} بالتسجيل عبر جوجل.`, baseUser.name);
-            setUser(baseUser);
-        } else {
-            const existingUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
-            await syncUserToCloud(existingUser);
-            setUser(existingUser);
         }
-      }
-    } catch (error) {
-      throw error;
+        setUser(baseUser);
+        syncUserToCloud(baseUser);
     }
   };
 

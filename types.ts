@@ -31,6 +31,16 @@ export interface Course {
   lessons: Lesson[];
 }
 
+export interface ActivationCode {
+  id: string;
+  code: string;
+  isUsed: boolean;
+  usedBy?: string;
+  usedAt?: string;
+  createdAt: string;
+  days: number;
+}
+
 export interface User {
   id: string;
   name: string;
@@ -40,7 +50,7 @@ export interface User {
   subscriptionTier: SubscriptionTier;
   subscriptionExpiry?: string; 
   lastSeen?: string; 
-  lastDevice?: string; // معلومات الجهاز المتصل
+  lastDevice?: string;
   joinedAt?: string;
   completedLessons?: string[]; 
 }
