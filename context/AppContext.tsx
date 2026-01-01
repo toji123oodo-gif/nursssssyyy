@@ -29,40 +29,37 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const getDeviceInfo = () => {
     const ua = navigator.userAgent;
-    let device = "متصفح غير معروف";
-    if (ua.match(/Android/i)) device = "Android Device";
+    let device = "Desktop Browser";
+    if (ua.match(/Android/i)) device = "Android Phone";
     else if (ua.match(/iPhone|iPad|iPod/i)) device = "iOS Device";
     else if (ua.match(/Windows/i)) device = "Windows PC";
     else if (ua.match(/Macintosh/i)) device = "MacBook";
-    else if (ua.match(/Linux/i)) device = "Linux System";
     return device;
   };
 
   useEffect(() => {
     if (!db) return;
 
-    // Use a try-catch wrapped listener for courses
+    // Use a robust courses sync
     const unsubscribe = db.collection("courses").onSnapshot(
       (snapshot) => {
         if (snapshot.empty) {
+          // If Firestore is empty (first run), seed with default data
           const batch = db.batch();
           defaultCourses.forEach((c) => {
             const ref = db.collection("courses").doc(c.id);
             batch.set(ref, c);
           });
-          batch.commit().catch(e => console.error("Initial seed failed:", e));
+          batch.commit().catch(e => console.error("Initial courses seed failed:", e));
         } else {
-          const cloudCourses: Course[] = [];
-          snapshot.forEach((doc) => {
-            cloudCourses.push({ id: doc.id, ...doc.data() } as Course);
-          });
+          const cloudCourses: Course[] = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
           setCourses(cloudCourses);
         }
       },
       (error) => {
-        console.error("Courses Snapshot Error:", error);
-        // Fallback to default data if Firestore fails
-        setCourses(defaultCourses);
+        console.warn("Firestore Courses sync warning (Offline mode active):", error);
+        // Persistence will handle local data, but if it's the very first load and offline, use default
+        if (courses.length === 0) setCourses(defaultCourses);
       }
     );
 
@@ -78,8 +75,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           lastDevice: getDeviceInfo()
       }, { merge: true });
     } catch (e) {
-      console.warn("User Sync delayed (Offline):", e);
-      // Data will sync automatically once online due to enabled persistence
+      // Quietly fail as Firestore will retry automatically due to persistence
     }
   };
 
@@ -92,19 +88,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         try {
-          // Attempt to fetch user with a timeout or local-first approach
           const docRef = db.collection("users").doc(firebaseUser.uid);
-          
-          // Get data - Firestore with persistence will return local data if offline
-          const docSnap = await docRef.get().catch(err => {
-            console.warn("Firestore fetch failed, using auth profile as fallback:", err);
-            return null;
-          });
+          const docSnap = await docRef.get();
           
           let baseUser: User;
-          if (docSnap && docSnap.exists) {
+          if (docSnap.exists) {
             baseUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
           } else {
+            // First time Google Login or similar
             baseUser = {
               id: firebaseUser.uid,
               name: firebaseUser.displayName || 'طالب جديد',
@@ -117,7 +108,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           setUser(baseUser);
           syncUserToCloud(baseUser);
         } catch (error) {
-          console.error("Auth Processing Error:", error);
+          console.error("User Auth context error:", error);
+          // Fallback to basic profile if Firestore times out
+          setUser({
+            id: firebaseUser.uid,
+            name: firebaseUser.displayName || 'طالب',
+            email: firebaseUser.email || '',
+            phone: '',
+            subscriptionTier: 'free'
+          });
         } finally {
           setIsLoading(false);
         }
@@ -141,7 +140,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await firebaseUser.updateProfile({ displayName: name });
       const newUser: User = { id: firebaseUser.uid, name, email, phone, subscriptionTier };
       setUser(newUser);
-      syncUserToCloud(newUser);
+      await syncUserToCloud(newUser);
     }
   };
 
@@ -160,12 +159,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               id: firebaseUser.uid,
               name: firebaseUser.displayName || 'طالب جوجل',
               email: firebaseUser.email || '',
-              phone: firebaseUser.phoneNumber || '',
+              phone: '',
               subscriptionTier: firebaseUser.email === 'toji123oodo@gmail.com' ? 'pro' : 'free'
             };
         }
         setUser(baseUser);
-        syncUserToCloud(baseUser);
+        await syncUserToCloud(baseUser);
     }
   };
 
