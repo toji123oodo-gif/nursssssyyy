@@ -115,7 +115,8 @@ export const Admin: React.FC = () => {
 
   const toggleUserRole = (role: 'student' | 'admin') => {
     if (!editingUser) return;
-    if (role === 'admin' && !window.confirm('تحذير أمان: هل أنت متأكد من ترقية هذا المستخدم إلى "مدير"؟ سيكون له صلاحيات كاملة للتحكم في المنصة.')) return;
+    if (role === 'admin' && !window.confirm('تحذير أمان: هل أنت متأكد من منح هذا المستخدم صلاحيات "مدير"؟ سيتمكن من التحكم في كافة بيانات المنصة.')) return;
+    
     setEditingUser({
       ...editingUser,
       role: role
@@ -390,9 +391,9 @@ export const Admin: React.FC = () => {
                               {u.subscriptionTier === 'pro' ? 'PREMIUM MEMBER' : 'FREE STUDENT'}
                             </span>
                             {u.role === 'admin' && (
-                              <span className="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-500/10 text-red-500 border border-red-500/20 self-start flex items-center gap-1">
-                                <ShieldAlert size={10} /> ADMIN
-                              </span>
+                                <span className="px-4 py-1.5 rounded-full text-[10px] font-black bg-red-500/10 text-red-500 border border-red-500/20 self-start flex items-center gap-1">
+                                    <ShieldAlert size={10} /> ADMIN
+                                </span>
                             )}
                           </div>
                         </td>
