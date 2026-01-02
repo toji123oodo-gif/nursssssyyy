@@ -13,6 +13,7 @@ import { Profile } from './pages/Profile';
 import { HelpCenter } from './pages/HelpCenter';
 import { CourseDetail } from './pages/CourseDetail';
 import { ExamHub } from './components/ExamHub';
+import { OnboardingTour } from './components/OnboardingTour';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -74,7 +75,12 @@ const AppContent: React.FC = () => {
           
           <Route path="*" element={<Navigate to="/" replace />} />
        </Routes>
-       {user && <ExamHub />}
+       {user && (
+         <>
+           <ExamHub />
+           <OnboardingTour />
+         </>
+       )}
     </Layout>
   );
 };

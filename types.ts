@@ -80,4 +80,5 @@ export interface User {
   completedLessons?: string[]; 
   completedExams?: string[];
   quizGrades?: Record<string, number>; // تخزين درجات الاختبارات
+  hasCompletedTour?: boolean; // هل أتم الجولة التعليمية؟
 }

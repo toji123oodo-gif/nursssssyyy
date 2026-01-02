@@ -16,13 +16,15 @@ export const ExamsTab: React.FC<Props> = ({ users }) => {
     users.forEach(u => {
       if (u.quizGrades) {
         Object.entries(u.quizGrades).forEach(([lessonId, score]) => {
+          // Fix: Explicitly cast score to number to resolve comparison error with unknown type from Object.entries
+          const scoreValue = score as number;
           results.push({
             userId: u.id,
             userName: u.name,
             phone: u.phone,
             lessonId,
-            score,
-            status: score >= 50 ? 'pass' : 'fail',
+            score: scoreValue,
+            status: scoreValue >= 50 ? 'pass' : 'fail',
             date: new Date().toLocaleDateString('ar-EG') // Ideally would store result timestamp
           });
         });
