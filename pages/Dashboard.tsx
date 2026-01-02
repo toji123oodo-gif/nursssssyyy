@@ -23,22 +23,23 @@ const Watermark: React.FC<{ userPhone: string }> = ({ userPhone }) => {
 export const Dashboard: React.FC = () => {
   const { user, courses, updateUserData } = useApp();
   
-  // IDs to track active selection instead of full objects to ensure we always get latest data from 'courses' array
   const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
   const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'content' | 'resources' | 'quiz'>('content');
 
-  // Sync selection with courses array
   useEffect(() => {
     if (courses.length > 0 && !activeCourseId) {
       setActiveCourseId(courses[0].id);
       setActiveLessonId(courses[0].lessons[0]?.id || null);
     }
-  }, [courses]);
+  }, [courses, activeCourseId]);
 
-  // Derived state: Get the actual up-to-date objects
+  // Derived state: نحصل على البيانات الحديثة دائماً بناءً على الـ ID
   const activeCourse = useMemo(() => courses.find(c => c.id === activeCourseId) || courses[0], [courses, activeCourseId]);
-  const activeLesson = useMemo(() => activeCourse?.lessons.find(l => l.id === activeLessonId) || activeCourse?.lessons[0], [activeCourse, activeLessonId]);
+  const activeLesson = useMemo(() => {
+    if (!activeCourse) return null;
+    return activeCourse.lessons.find(l => l.id === activeLessonId) || activeCourse.lessons[0];
+  }, [activeCourse, activeLessonId]);
   
   const activeContent = useMemo(() => {
     if (!activeLesson) return null;
@@ -97,7 +98,7 @@ export const Dashboard: React.FC = () => {
                     {activeContent?.type === 'video' ? (
                       <iframe className="w-full h-full" src={`${activeContent.url}?modestbranding=1&rel=0`} title={activeContent.title} frameBorder="0" allowFullScreen></iframe>
                     ) : (
-                      <div className="w-full h-full flex items-center justify-center text-brand-muted italic">لا يوجد محتوى فيديو متاح</div>
+                      <div className="w-full h-full flex items-center justify-center text-brand-muted italic">لا يوجد محتوى فيديو متاح حالياً</div>
                     )}
                     <Watermark userPhone={user.phone || user.email} />
                   </>
@@ -136,6 +137,9 @@ export const Dashboard: React.FC = () => {
                               </button>
                           </div>
                       ))}
+                      {activeLesson.contents?.filter(c => c.type === 'pdf' || c.type === 'document').length === 0 && (
+                        <p className="col-span-full text-center py-10 text-brand-muted font-bold italic">لا توجد ملفات مرفقة لهذا الدرس</p>
+                      )}
                   </div>
                 )}
 
