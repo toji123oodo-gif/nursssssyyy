@@ -14,6 +14,7 @@ import { HelpCenter } from './pages/HelpCenter';
 import { CourseDetail } from './pages/CourseDetail';
 import { ExamHub } from './components/ExamHub';
 import { OnboardingTour } from './components/OnboardingTour';
+import { NursyGuideBot } from './components/NursyGuideBot';
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -79,6 +80,7 @@ const AppContent: React.FC = () => {
          <>
            <ExamHub />
            <OnboardingTour />
+           <NursyGuideBot />
          </>
        )}
     </Layout>
