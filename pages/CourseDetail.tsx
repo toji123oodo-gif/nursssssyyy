@@ -2,7 +2,7 @@
 import React from 'react';
 import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useApp } from '../context/AppContext';
-import { Play, Clock, BookOpen, Star, User, Shield, CheckCircle, Lock, ArrowLeft, Award, GraduationCap, Briefcase, Download, Sparkles } from 'lucide-react';
+import { Play, Clock, BookOpen, Star, User, Shield, CheckCircle, Lock, ArrowLeft, Award, GraduationCap, Briefcase, Download, Sparkles, Brain } from 'lucide-react';
 
 export const CourseDetail: React.FC = () => {
   const { courseId } = useParams();
@@ -119,7 +119,14 @@ export const CourseDetail: React.FC = () => {
                                             {idx + 1}
                                         </div>
                                         <div>
-                                            <h4 className="text-white font-bold">{lesson.title}</h4>
+                                            <div className="flex items-center gap-2">
+                                                <h4 className="text-white font-bold">{lesson.title}</h4>
+                                                {lesson.quiz && (
+                                                    <div className="flex items-center gap-1 bg-brand-gold/10 text-brand-gold px-2 py-0.5 rounded-lg text-[8px] font-black uppercase">
+                                                        <Brain size={10} /> اختبار متاح
+                                                    </div>
+                                                )}
+                                            </div>
                                             <span className="text-xs text-brand-muted">{lesson.duration || '45'} دقيقة</span>
                                         </div>
                                     </div>

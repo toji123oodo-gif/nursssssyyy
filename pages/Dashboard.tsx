@@ -1,8 +1,8 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Lock, Play, Star, Clock, CheckCircle, FileText, MonitorPlay, Brain, X, ChevronLeft, List, FileDown } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { ContentItem } from '../types';
+import { ContentItem, Course, Lesson } from '../types';
 import { QuizPlayer } from '../components/QuizPlayer';
 
 const Watermark: React.FC<{ userPhone: string }> = ({ userPhone }) => {
@@ -22,18 +22,39 @@ const Watermark: React.FC<{ userPhone: string }> = ({ userPhone }) => {
 
 export const Dashboard: React.FC = () => {
   const { user, courses, updateUserData } = useApp();
-  const [activeCourse, setActiveCourse] = useState(courses[0]); 
-  const [activeLesson, setActiveLesson] = useState(activeCourse.lessons[0]);
-  const [activeContent, setActiveContent] = useState<ContentItem | null>(activeLesson.contents?.[0] || null);
+  
+  // IDs to track active selection instead of full objects to ensure we always get latest data from 'courses' array
+  const [activeCourseId, setActiveCourseId] = useState<string | null>(null);
+  const [activeLessonId, setActiveLessonId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'content' | 'resources' | 'quiz'>('content');
-  const [showPlaylist, setShowPlaylist] = useState(false);
+
+  // Sync selection with courses array
+  useEffect(() => {
+    if (courses.length > 0 && !activeCourseId) {
+      setActiveCourseId(courses[0].id);
+      setActiveLessonId(courses[0].lessons[0]?.id || null);
+    }
+  }, [courses]);
+
+  // Derived state: Get the actual up-to-date objects
+  const activeCourse = useMemo(() => courses.find(c => c.id === activeCourseId) || courses[0], [courses, activeCourseId]);
+  const activeLesson = useMemo(() => activeCourse?.lessons.find(l => l.id === activeLessonId) || activeCourse?.lessons[0], [activeCourse, activeLessonId]);
+  
+  const activeContent = useMemo(() => {
+    if (!activeLesson) return null;
+    return activeLesson.contents.find(c => c.type === 'video') || activeLesson.contents[0] || null;
+  }, [activeLesson]);
 
   useEffect(() => {
-    if (activeLesson.contents?.length > 0) { setActiveContent(activeLesson.contents[0]); } 
-    else { setActiveContent(null); }
     if (window.innerWidth < 1024) { window.scrollTo({ top: 0, behavior: 'smooth' }); }
     setActiveTab('content');
-  }, [activeLesson]);
+  }, [activeLessonId]);
+
+  if (!user || !activeCourse || !activeLesson) return (
+    <div className="min-h-screen flex items-center justify-center">
+      <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-brand-gold"></div>
+    </div>
+  );
 
   const isLessonAccessible = (index: number) => {
     if (user?.subscriptionTier === 'pro') return true;
@@ -56,8 +77,6 @@ export const Dashboard: React.FC = () => {
     const currentGrades = user.quizGrades || {};
     await updateUserData({ quizGrades: { ...currentGrades, [activeLesson.id]: score } });
   };
-
-  if (!user) return null;
 
   return (
     <div className="min-h-screen px-0 md:px-8 py-0 md:py-8 pb-32">
@@ -97,7 +116,7 @@ export const Dashboard: React.FC = () => {
                         <button onClick={() => setActiveTab('content')} className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-[10px] md:text-xs font-black transition-all whitespace-nowrap ${activeTab === 'content' ? 'bg-brand-gold text-brand-main shadow-glow' : 'text-brand-muted hover:text-white'}`}>الدرس</button>
                         <button onClick={() => setActiveTab('resources')} className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-[10px] md:text-xs font-black transition-all whitespace-nowrap ${activeTab === 'resources' ? 'bg-brand-gold text-brand-main shadow-glow' : 'text-brand-muted hover:text-white'}`}>الملفات</button>
                         {activeLesson.quiz && (
-                          <button onClick={() => setActiveTab('quiz')} className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-[10px] md:text-xs font-black transition-all whitespace-nowrap flex items-center gap-2 ${activeTab === 'quiz' ? 'bg-brand-gold text-brand-main shadow-glow' : 'text-brand-muted hover:text-white'}`}>
+                          <button onClick={() => setActiveTab('quiz')} className={`flex-1 md:flex-none px-6 py-3 rounded-xl text-[10px] md:text-xs font-black transition-all whitespace-nowrap flex items-center gap-2 animate-bounce-slow ${activeTab === 'quiz' ? 'bg-brand-gold text-brand-main shadow-glow' : 'text-brand-muted hover:text-white'}`}>
                             <Brain size={14} /> الاختبار
                           </button>
                         )}
@@ -128,7 +147,7 @@ export const Dashboard: React.FC = () => {
                         <div>
                             <h4 className="text-white font-black text-lg leading-tight">حالة الدرس</h4>
                             {user.quizGrades?.[activeLesson.id] !== undefined && (
-                              <p className="text-brand-gold text-[10px] font-black uppercase mt-1">آخر درجة: {user.quizGrades[activeLesson.id]}%</p>
+                              <p className="text-brand-gold text-[10px] font-black uppercase mt-1">درجة الاختبار: {user.quizGrades[activeLesson.id]}%</p>
                             )}
                         </div>
                     </div>
@@ -142,15 +161,15 @@ export const Dashboard: React.FC = () => {
         <div className="hidden lg:block w-96 shrink-0">
             <div className="bg-brand-card rounded-[3rem] border border-white/5 overflow-hidden sticky top-28 shadow-2xl">
                 <div className="p-8 bg-white/5 border-b border-white/5 flex items-center justify-between">
-                    <h3 className="text-white text-xl font-black flex items-center gap-3"><List size={22} className="text-brand-gold" /> قائمة الدروس</h3>
+                    <h3 className="text-white text-xl font-black flex items-center gap-3"><List size={22} className="text-brand-gold" /> قائمة المحاضرات</h3>
                 </div>
                 <div className="max-h-[65vh] overflow-y-auto no-scrollbar py-2">
                     {activeCourse.lessons.map((lesson, idx) => {
                         const accessible = isLessonAccessible(idx);
-                        const active = activeLesson.id === lesson.id;
+                        const active = activeLessonId === lesson.id;
                         const completed = isLessonCompleted(lesson.id);
                         return (
-                            <button key={lesson.id} onClick={() => accessible && setActiveLesson(lesson)} className={`w-full flex items-center gap-5 p-6 border-b border-white/5 last:border-0 transition-all text-right ${active ? 'bg-brand-gold/10' : 'hover:bg-white/5'} ${!accessible ? 'opacity-40' : ''}`}>
+                            <button key={lesson.id} onClick={() => accessible && setActiveLessonId(lesson.id)} className={`w-full flex items-center gap-5 p-6 border-b border-white/5 last:border-0 transition-all text-right ${active ? 'bg-brand-gold/10' : 'hover:bg-white/5'} ${!accessible ? 'opacity-40' : ''}`}>
                                 <div className={`w-12 h-12 rounded-2xl flex items-center justify-center font-black text-base shrink-0 shadow-lg ${active ? 'bg-brand-gold text-brand-main' : completed ? 'bg-green-500/20 text-green-500' : 'bg-brand-main text-brand-muted'}`}>
                                     {accessible ? completed ? <CheckCircle size={22} /> : (idx + 1) : <Lock size={20} />}
                                 </div>
