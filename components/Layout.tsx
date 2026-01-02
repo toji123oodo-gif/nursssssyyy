@@ -5,7 +5,7 @@ import {
   Home, Wallet, User as UserIcon, LogOut, 
   GraduationCap, LayoutDashboard, LogIn, 
   ShieldAlert, LifeBuoy, ChevronDown, 
-  CreditCard, Calendar, Bell, Languages
+  CreditCard, Calendar, Bell, Languages, ShieldCheck, Zap
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
@@ -17,6 +17,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const { user, logout, setExamHubOpen, language, toggleLanguage } = useApp();
 
   const isActive = (path: string) => location.pathname === path;
+  
+  // تحقق متطور من صلاحيات الأدمن
   const adminEmails = ['admin@nursy.com', 'toji123oodo@gmail.com'];
   const isAdmin = user && user.email && adminEmails.includes(user.email);
 
@@ -25,17 +27,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     dashboard: language === 'ar' ? 'مساحة العمل' : 'Dashboard',
     wallet: language === 'ar' ? 'المحفظة' : 'Wallet',
     help: language === 'ar' ? 'المساعدة' : 'Help',
-    exams: language === 'ar' ? 'جدول الامتحانات' : 'Exam Table',
     login: language === 'ar' ? 'دخول' : 'Login',
-    logout: language === 'ar' ? 'تسجيل الخروج' : 'Logout',
-    profile: language === 'ar' ? 'ملفي الشخصي' : 'Profile',
-    walletSub: language === 'ar' ? 'المحفظة والاشتراك' : 'Wallet & Subscription',
+    admin: language === 'ar' ? 'لوحة الإدارة' : 'Admin Panel',
   };
 
   useEffect(() => {
-    const handleScroll = () => {
-      setIsScrolled(window.scrollY > 20);
-    };
+    const handleScroll = () => setIsScrolled(window.scrollY > 20);
     window.addEventListener('scroll', handleScroll);
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
@@ -60,15 +57,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       >
         <Icon size={14} className={`md:size-4 transition-transform duration-300 ${active ? 'scale-110' : 'group-hover:scale-110'}`} />
         <span className="whitespace-nowrap">{label}</span>
-        {active && (
-            <span className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-1 h-1 bg-brand-gold rounded-full shadow-glow"></span>
-        )}
       </Link>
     );
   };
 
   return (
-    <div className={`min-h-screen bg-brand-main text-brand-text font-sans flex flex-col selection:bg-brand-gold selection:text-brand-main`}>
+    <div className="min-h-screen bg-brand-main text-brand-text font-sans flex flex-col selection:bg-brand-gold selection:text-brand-main">
       <header className="fixed top-0 left-0 right-0 z-[100] py-3 md:py-6">
         <div className="container mx-auto px-2 md:px-4">
           <div className={`mx-auto max-w-7xl px-3 md:px-6 py-2 rounded-full border border-white/10 flex items-center justify-between gap-2 md:gap-4 transition-all duration-500 bg-brand-main/40 backdrop-blur-2xl shadow-2xl ${
@@ -76,61 +70,61 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           }`}>
             
             {/* Logo */}
-            <Link id="nav-logo" to="/" className={`flex items-center gap-1.5 md:gap-2 group shrink-0 ${language === 'ar' ? 'order-last' : 'order-first'}`}>
+            <Link to="/" className={`flex items-center gap-2 group shrink-0 ${language === 'ar' ? 'order-last' : 'order-first'}`}>
               <h1 className="font-black text-sm md:text-2xl text-white tracking-tighter">Nursy<span className="text-brand-gold">.</span></h1>
-              <div className="bg-brand-gold p-1 md:p-1.5 rounded-lg md:rounded-xl shadow-lg group-hover:rotate-12 transition-transform">
+              <div className="bg-brand-gold p-1.5 rounded-xl shadow-lg group-hover:rotate-12 transition-transform">
                   <GraduationCap className="text-brand-main h-4 w-4 md:h-6 md:w-6" />
               </div>
             </Link>
 
             {/* Middle Navigation */}
-            <nav className="flex items-center gap-0.5 md:gap-1 bg-white/5 p-1 rounded-full border border-white/5 mx-auto overflow-x-auto no-scrollbar max-w-[50%] md:max-w-none">
+            <nav className="flex items-center gap-1 bg-white/5 p-1 rounded-full border border-white/5 mx-auto overflow-x-auto no-scrollbar max-w-[50%] md:max-w-none">
                 <NavLink to="/" icon={Home} label={t.home} />
-                {user && <NavLink id="nav-dashboard" to="/dashboard" icon={LayoutDashboard} label={t.dashboard} />}
-                {user && <NavLink id="nav-wallet" to="/wallet" icon={Wallet} label={t.wallet} />}
-                <NavLink id="nav-help" to="/help" icon={LifeBuoy} label={t.help} />
+                {user && <NavLink to="/dashboard" icon={LayoutDashboard} label={t.dashboard} />}
+                
+                {/* Admin Specialized Button */}
+                {isAdmin && (
+                  <Link to="/admin" className="admin-access-btn group/admin">
+                    <div className="admin-pulse-ring"></div>
+                    <div className="admin-btn-shimmer"></div>
+                    <ShieldCheck size={16} className="text-brand-gold group-hover/admin:rotate-12 transition-transform" />
+                    <span className="relative z-10">{t.admin}</span>
+                  </Link>
+                )}
+                
+                {user && <NavLink to="/wallet" icon={Wallet} label={t.wallet} />}
             </nav>
 
             {/* Profile Section */}
             <div className={`flex items-center gap-1.5 md:gap-3 shrink-0 ${language === 'ar' ? 'order-first' : 'order-last'}`}>
-               
-               <button 
-                onClick={toggleLanguage}
-                className="flex items-center gap-1 md:gap-2 p-2 rounded-full bg-white/5 border border-transparent hover:border-brand-gold/20 text-brand-muted hover:text-brand-gold transition-all"
-               >
-                 <Languages size={14} className="md:size-4" />
-                 <span className="text-[10px] md:text-xs font-black uppercase tracking-tighter">{language === 'ar' ? 'EN' : 'AR'}</span>
+               <button onClick={toggleLanguage} className="flex items-center gap-2 p-2 rounded-full bg-white/5 border border-transparent hover:border-brand-gold/20 text-brand-muted hover:text-brand-gold transition-all">
+                 <Languages size={14} />
+                 <span className="text-[10px] font-black uppercase">{language === 'ar' ? 'EN' : 'AR'}</span>
                </button>
 
                {user ? (
-                 <div className="flex items-center gap-1 md:gap-2">
-                    <div id="nav-profile" className="relative">
+                 <div className="flex items-center gap-2">
+                    <div className="relative">
                       <button 
                         onClick={() => setIsProfileOpen(!isProfileOpen)}
-                        className={`flex items-center gap-1.5 md:gap-2 p-0.5 rounded-full transition-all border ${
-                          isProfileOpen ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-white/5 border-transparent hover:border-white/10'
-                        } ${language === 'ar' ? 'pr-0.5 pl-0.5 md:pr-4' : 'pl-0.5 pr-0.5 md:pl-4'}`}
+                        className={`flex items-center gap-2 p-0.5 rounded-full transition-all border ${isProfileOpen ? 'bg-brand-gold/10 border-brand-gold/30' : 'bg-white/5 border-transparent'}`}
                       >
-                         <ChevronDown size={10} className={`hidden md:block text-brand-muted transition-transform ${isProfileOpen ? 'rotate-180' : ''}`} />
-                         <div className={`text-left hidden sm:block mx-1 ${language === 'en' ? 'order-last' : ''}`}>
-                            <p className="text-[9px] font-black text-white leading-tight">{user.name.split(' ')[0]}</p>
-                            <p className="text-[7px] text-brand-gold font-bold uppercase tracking-widest">{user.subscriptionTier}</p>
+                         <div className="hidden sm:block mx-2 text-right">
+                            <p className="text-[10px] font-black text-white leading-tight">{user.name.split(' ')[0]}</p>
+                            <p className="text-[8px] text-brand-gold font-bold uppercase tracking-widest">{isAdmin ? 'SUPER ADMIN' : user.subscriptionTier}</p>
                          </div>
-                         <div className="w-7 h-7 md:w-8 md:h-8 rounded-full bg-gradient-to-tr from-brand-gold to-yellow-600 flex items-center justify-center text-brand-main shadow-lg">
-                            <UserIcon size={12} strokeWidth={3} />
+                         <div className={`w-8 h-8 rounded-full flex items-center justify-center text-brand-main shadow-lg ${isAdmin ? 'bg-gradient-to-tr from-red-600 to-brand-gold' : 'bg-brand-gold'}`}>
+                            {isAdmin ? <Zap size={14} fill="currentColor" /> : <UserIcon size={14} strokeWidth={3} />}
                          </div>
                       </button>
-                      {/* ... profile dropdown logic ... */}
                     </div>
-                    <button id="nav-exams" onClick={() => setExamHubOpen(true)} className="p-1.5 md:p-2 text-brand-muted hover:text-brand-gold hover:bg-brand-gold/10 rounded-full transition-all">
+                    <button onClick={() => setExamHubOpen(true)} className="p-2 text-brand-muted hover:text-brand-gold hover:bg-brand-gold/10 rounded-full transition-all">
                       <Calendar size={18} />
                     </button>
                  </div>
                ) : (
-                 <Link to="/login" className="group relative px-4 md:px-6 py-1.5 md:py-2.5 rounded-full overflow-hidden border border-white/10 transition-all duration-300 hover:border-brand-gold/50 bg-white/5">
-                   <span className="relative z-10 flex items-center gap-2 text-brand-muted group-hover:text-white font-bold text-[10px] md:text-xs">
-                     <LogIn size={14} /> {t.login}
-                   </span>
+                 <Link to="/login" className="px-6 py-2.5 rounded-full bg-white/5 border border-white/10 hover:border-brand-gold/50 text-brand-muted hover:text-white font-bold text-xs transition-all">
+                   {t.login}
                  </Link>
                )}
             </div>
