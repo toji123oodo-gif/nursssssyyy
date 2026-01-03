@@ -4,17 +4,15 @@ import * as ReactRouterDOM from 'react-router-dom';
 const { Link, useLocation, useNavigate } = ReactRouterDOM as any;
 import { 
   Home, User as UserIcon, LogOut, 
-  GraduationCap, LayoutDashboard, Bell, 
+  GraduationCap, LayoutDashboard, 
   Settings, Search, Menu, X, Calendar, 
   Sparkles, ChevronDown, Award,
   MessageSquare, Zap, Target, BookOpen
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import { NotificationDrawer } from './NotificationDrawer';
 
 export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const location = useLocation();
@@ -45,8 +43,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   return (
     <div className="min-h-screen bg-brand-main text-brand-text font-sans flex flex-col selection:bg-brand-gold selection:text-brand-main overflow-x-hidden">
       
-      <NotificationDrawer isOpen={isNotificationsOpen} onClose={() => setIsNotificationsOpen(false)} />
-
       {/* --- Desktop Header --- */}
       <header className={`fixed top-0 left-0 right-0 z-[100] transition-all duration-700 px-4 md:px-8 ${isScrolled ? 'pt-4' : 'pt-8'}`}>
         <div className={`container mx-auto max-w-7xl h-20 rounded-[2rem] border transition-all duration-700 flex items-center justify-between px-8 shadow-2xl ${
@@ -99,14 +95,6 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
                   className="bg-white/5 border border-white/5 rounded-xl pr-10 pl-4 py-2 text-[10px] font-bold text-white outline-none focus:border-brand-gold/50 w-40 focus:w-60 transition-all"
                 />
              </div>
-
-             <button 
-               onClick={() => setIsNotificationsOpen(true)} 
-               className="p-3 rounded-xl bg-white/5 text-brand-muted hover:text-brand-gold transition-all relative border border-white/5"
-             >
-               <Bell size={18} />
-               <span className="absolute top-2.5 right-2.5 w-2 h-2 bg-red-500 rounded-full border-2 border-brand-card"></span>
-             </button>
 
              {user ? (
                <div className="relative" ref={dropdownRef}>

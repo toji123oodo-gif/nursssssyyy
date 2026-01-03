@@ -12,6 +12,7 @@ import { LessonNotes } from '../components/dashboard/LessonNotes';
 import { LessonDiscussion } from '../components/dashboard/LessonDiscussion';
 import { LeaderboardWidget } from '../components/dashboard/LeaderboardWidget';
 import { FlashcardWidget } from '../components/dashboard/FlashcardWidget';
+import { db } from '../firebase';
 
 export const Dashboard: React.FC = () => {
   const { user, courses, updateUserData } = useApp();
@@ -55,6 +56,25 @@ export const Dashboard: React.FC = () => {
     });
   };
 
+  const handleQuizComplete = async (score: number) => {
+    if (!user || !activeLesson) return;
+    
+    // Save quiz grade to user profile
+    const currentGrades = user.quizGrades || {};
+    const updatedGrades = { ...currentGrades, [activeLesson.id]: score };
+    
+    // Reward XP based on score
+    let xpToAdd = 0;
+    if (score >= 90) xpToAdd = 150;
+    else if (score >= 50) xpToAdd = 100;
+    else xpToAdd = 20;
+
+    await updateUserData({
+      quizGrades: updatedGrades,
+      xp: (user.xp || 0) + xpToAdd
+    });
+  };
+
   const courseProgress = Math.round(
     (user.completedLessons?.filter(id => 
       activeCourse.lessons.some(l => l.id === id)
@@ -66,11 +86,7 @@ export const Dashboard: React.FC = () => {
       {isQuizActive && activeLesson.quiz && (
         <QuizPlayer 
           quiz={activeLesson.quiz} 
-          onComplete={(score) => {
-            if (score >= 50) {
-               updateUserData({ xp: (user.xp || 0) + 100 });
-            }
-          }} 
+          onComplete={handleQuizComplete} 
           onClose={() => setIsQuizActive(false)} 
         />
       )}
