@@ -2,7 +2,7 @@
 import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Course, Lesson, Question, Quiz } from '../../types';
-import { PlusCircle, Edit, Trash, Layers, Mic2, FileDown, Plus, X, FileText, Upload, Info, Save, ChevronDown, ChevronUp, GripVertical, BookOpen, Brain, CheckCircle2 } from 'lucide-react';
+import { PlusCircle, Edit, Trash, Layers, Mic2, FileDown, Plus, X, FileText, Upload, Info, Save, ChevronDown, ChevronUp, GripVertical, BookOpen, Brain, CheckCircle2, FileJson } from 'lucide-react';
 
 export const CoursesTab: React.FC = () => {
   const { courses, addCourse, updateCourse, deleteCourse } = useApp();
@@ -35,6 +35,34 @@ export const CoursesTab: React.FC = () => {
       id: 'qn'+Date.now(), text: 'سؤال جديد؟', options: ['1','2','3','4'], correctOptionIndex: 0
     });
     setEditingCourse({...editingCourse, lessons: newL});
+  };
+
+  const handleBulkImport = () => {
+    if (targetIdx === null || !bulkText.trim()) return;
+    const lines = bulkText.split('\n').filter(l => l.trim().includes('|'));
+    const importedQuestions: Question[] = lines.map(line => {
+      const parts = line.split('|').map(p => p.trim());
+      const text = parts[0];
+      const options = parts.slice(1, 5);
+      const correctIdx = parseInt(parts[5]) || 0;
+      return {
+        id: 'qn' + Math.random().toString(36).substr(2, 9),
+        text,
+        options,
+        correctOptionIndex: correctIdx
+      };
+    });
+
+    const newL = [...(editingCourse?.lessons || [])];
+    if (!newL[targetIdx].quiz) {
+      newL[targetIdx].quiz = { id: 'q' + Date.now(), title: 'اختبار مستورد', questions: [] };
+    }
+    newL[targetIdx].quiz!.questions = [...(newL[targetIdx].quiz!.questions || []), ...importedQuestions];
+    
+    setEditingCourse({ ...editingCourse, lessons: newL });
+    setBulkText('');
+    setIsBulkOpen(false);
+    setTargetIdx(null);
   };
 
   return (
@@ -142,7 +170,10 @@ export const CoursesTab: React.FC = () => {
                                 <div className="bg-brand-main/40 p-6 rounded-2xl border border-brand-gold/10">
                                    <div className="flex justify-between items-center mb-4">
                                       <h5 className="text-white font-black text-sm flex items-center gap-2"><Brain size={16} /> الاختبار</h5>
-                                      <button onClick={() => addManualQuestion(lIdx)} className="text-[9px] font-black text-brand-gold bg-brand-gold/10 px-3 py-1 rounded-lg">إضافة سؤال</button>
+                                      <div className="flex gap-2">
+                                         <button onClick={() => { setTargetIdx(lIdx); setIsBulkOpen(true); }} className="text-[9px] font-black text-brand-gold bg-brand-gold/10 px-3 py-1 rounded-lg flex items-center gap-1"><FileJson size={12}/> استيراد أسئلة</button>
+                                         <button onClick={() => addManualQuestion(lIdx)} className="text-[9px] font-black text-brand-gold bg-brand-gold/10 px-3 py-1 rounded-lg">إضافة سؤال</button>
+                                      </div>
                                    </div>
                                    <div className="space-y-3">
                                       {lesson.quiz?.questions.map((q, qIdx) => (
@@ -169,6 +200,26 @@ export const CoursesTab: React.FC = () => {
                 <button onClick={handleSave} className="bg-brand-gold text-brand-main font-black px-10 py-4 rounded-xl shadow-glow flex items-center gap-2"><Save size={20}/> حفظ التعديلات</button>
              </div>
           </div>
+        </div>
+      )}
+
+      {isBulkOpen && (
+        <div className="fixed inset-0 z-[600] flex items-center justify-center p-4">
+           <div className="absolute inset-0 bg-brand-main/90 backdrop-blur-xl" onClick={() => setIsBulkOpen(false)}></div>
+           <div className="relative w-full max-w-2xl bg-brand-card border border-white/10 rounded-[2.5rem] p-8 space-y-6 shadow-2xl animate-scale-up">
+              <h3 className="text-xl font-black text-white">استيراد أسئلة دفعة واحدة</h3>
+              <p className="text-brand-muted text-xs font-bold leading-relaxed">أدخل الأسئلة بالصيغة التالية: <br/> <span className="text-brand-gold">السؤال | الاختيار1 | الاختيار2 | الاختيار3 | الاختيار4 | رقم الإجابة الصحيحة (0-3)</span></p>
+              <textarea 
+                value={bulkText}
+                onChange={e => setBulkText(e.target.value)}
+                placeholder="كم عدد عظام جسم الإنسان؟ | 206 | 210 | 190 | 150 | 0"
+                className="w-full h-64 bg-brand-main border border-white/10 rounded-2xl p-6 text-white text-xs font-mono outline-none focus:border-brand-gold"
+              ></textarea>
+              <div className="flex gap-4">
+                 <button onClick={handleBulkImport} className="flex-1 bg-brand-gold text-brand-main font-black py-4 rounded-xl shadow-glow">بدء الاستيراد</button>
+                 <button onClick={() => setIsBulkOpen(false)} className="flex-1 bg-white/5 text-white font-black py-4 rounded-xl border border-white/10">إلغاء</button>
+              </div>
+           </div>
         </div>
       )}
     </div>

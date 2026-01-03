@@ -22,7 +22,6 @@ import { VideoAI } from './pages/VideoAI';
 import { Community } from './pages/Community';
 import { ExamHub } from './components/ExamHub';
 import { OnboardingTour } from './components/OnboardingTour';
-import { NursyGuideBot } from './components/NursyGuideBot';
 import { jwtUtils } from './utils/jwt';
 
 // Protected Route Component
@@ -125,7 +124,6 @@ const AppContent: React.FC = () => {
          <>
            <ExamHub />
            <OnboardingTour />
-           <NursyGuideBot />
          </>
        )}
     </Layout>

@@ -9,7 +9,6 @@ import {
   Share2, MessageCircle, MoreHorizontal, Image as ImageIcon,
   Volume2, Globe, Command, Award, Filter
 } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
 
 interface Post {
   id: string;
@@ -270,7 +269,7 @@ export const Community: React.FC = () => {
       <aside className="hidden xl:flex flex-col w-72 shrink-0 gap-6">
          <div className="ns-card bg-brand-card/40 backdrop-blur-3xl border-white/5 p-6">
             <h4 className="text-white font-black text-sm mb-6 flex items-center gap-2">
-               <Sparkles className="text-brand-gold" size={16} /> تلميح نيرسي الذكي
+               <Sparkles className="text-brand-gold" size={16} /> تلميح نيرسي
             </h4>
             <div className="bg-brand-gold/5 border border-brand-gold/10 p-4 rounded-2xl">
                <p className="text-[11px] text-brand-muted font-bold leading-relaxed">
@@ -318,18 +317,6 @@ export const Community: React.FC = () => {
                   className="w-full h-48 bg-transparent text-white text-lg font-bold outline-none resize-none placeholder:text-brand-muted/20"
                   autoFocus
                 ></textarea>
-
-                {/* Selected Files Preview */}
-                {attachedFiles.length > 0 && (
-                  <div className="flex flex-wrap gap-2">
-                     {attachedFiles.map((f, i) => (
-                       <div key={i} className="bg-brand-gold/10 border border-brand-gold/20 px-3 py-1.5 rounded-xl flex items-center gap-2 text-[10px] text-brand-gold font-black">
-                          <FileText size={12} /> {f.name}
-                          <button onClick={() => setAttachedFiles(f => f.filter((_, idx) => idx !== i))}><X size={10}/></button>
-                       </div>
-                     ))}
-                  </div>
-                )}
 
                 <div className="flex items-center justify-between pt-6 border-t border-white/5">
                    <div className="flex gap-4">
