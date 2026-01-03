@@ -10,7 +10,7 @@
   }
 
   ::-webkit-scrollbar {
-    @apply w-2;
+    @apply w-1.5;
   }
 
   ::-webkit-scrollbar-track {
@@ -18,7 +18,7 @@
   }
 
   ::-webkit-scrollbar-thumb {
-    @apply bg-brand-card rounded-full border-2 border-brand-main;
+    @apply bg-brand-card rounded-full border border-brand-main;
   }
 
   ::-webkit-scrollbar-thumb:hover {
@@ -57,7 +57,7 @@
   }
 
   .ns-card--glass {
-    @apply bg-white/5 backdrop-blur-[16px] border border-white/10 shadow-2xl;
+    @apply bg-white/10 backdrop-blur-[24px] border border-white/20 shadow-2xl;
   }
 
   .ns-card--premium {
@@ -88,67 +88,44 @@
     transform: translateY(0) scale(1);
   }
 
-  /* Block: Nursy Parallax (ns-parallax) */
-  .ns-parallax {
-    will-change: transform;
-  }
-
   /* Block: Nursy Shadow (ns-shadow) */
   .ns-shadow--premium {
     box-shadow: 0 20px 50px -15px rgba(251, 191, 36, 0.3);
   }
 
   .ns-shadow--glow {
-    box-shadow: 0 0 30px -5px rgba(251, 191, 36, 0.4);
+    box-shadow: 0 0 40px -10px rgba(251, 191, 36, 0.5);
   }
 
   .ns-shadow--glow-green {
     box-shadow: 0 0 30px -5px rgba(34, 197, 94, 0.4);
   }
 
-  /* Block: Nursy Utils (ns-util) */
-  .ns-util--no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
-  }
-  .ns-util--no-scrollbar::-webkit-scrollbar {
-    display: none;
-  }
-
   /* Animations */
   @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(30px); }
+    0% { opacity: 0; transform: translateY(20px); }
     100% { opacity: 1; transform: translateY(0); }
   }
 
-  .ns-animate--fade-in-up {
-    animation: fadeInUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .animate-fade-in-up {
+    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 
   @keyframes float {
     0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-15px); }
+    50% { transform: translateY(-10px); }
   }
 
-  .ns-animate--float {
+  .animate-float {
     animation: float 4s ease-in-out infinite;
   }
 
-  @keyframes slow-spin {
-    from { transform: rotate(0deg); }
-    to { transform: rotate(360deg); }
-  }
-
-  .ns-animate--slow-spin {
-    animation: slow-spin 20s linear infinite;
-  }
-
   @keyframes scale-up {
-    0% { transform: scale(0.95); opacity: 0; }
+    0% { transform: scale(0.98); opacity: 0; }
     100% { transform: scale(1); opacity: 1; }
   }
 
-  .ns-animate--scale-up {
-    animation: scale-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .animate-scale-up {
+    animation: scale-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   }
 }
