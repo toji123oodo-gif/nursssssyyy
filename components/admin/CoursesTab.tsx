@@ -5,16 +5,19 @@ import { Course, Lesson, ContentItem, Question } from '../../types';
 import { 
   Plus, Edit2, Trash2, X, Save, FileText, Mic, 
   Video, Upload, Check, ChevronDown, ChevronRight,
-  MoreVertical, FileJson, Brain, Layout, DollarSign, Image as ImageIcon, Lock
+  MoreVertical, FileJson, Brain, Layout, DollarSign, 
+  Image as ImageIcon, Lock, Clock, AlertCircle, Settings, 
+  AlignLeft, List
 } from 'lucide-react';
 
 export const CoursesTab: React.FC = () => {
   const { courses, addCourse, updateCourse, deleteCourse, user } = useApp();
   const [isModalOpen, setIsModalOpen] = useState(false);
   
-  // Initialize with safe default values to prevent undefined errors
+  // Editor State
   const [editingCourse, setEditingCourse] = useState<Partial<Course> | null>(null);
   const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
+  const [activeLessonTab, setActiveLessonTab] = useState<'content' | 'quiz' | 'settings'>('content');
 
   const OWNER_EMAIL = "toji123oodo@gmail.com";
   const isOwner = user?.email === OWNER_EMAIL;
@@ -36,7 +39,6 @@ export const CoursesTab: React.FC = () => {
   const handleSave = async () => {
     if (!editingCourse?.title || !isOwner) return;
     
-    // Ensure data integrity before saving
     const courseData: Course = {
         id: editingCourse.id || 'c-' + Date.now(),
         title: editingCourse.title,
@@ -47,7 +49,11 @@ export const CoursesTab: React.FC = () => {
         lessons: (editingCourse.lessons || []).map(l => ({
             ...l,
             contents: l.contents || [],
-            quiz: l.quiz || { id: 'q-'+Date.now(), title: 'Quiz', questions: [] }
+            quiz: l.quiz ? {
+                ...l.quiz,
+                timeLimit: Number(l.quiz.timeLimit) || 0,
+                passingScore: Number(l.quiz.passingScore) || 50
+            } : undefined
         }))
     };
 
@@ -62,15 +68,23 @@ export const CoursesTab: React.FC = () => {
     const newLesson: Lesson = {
       id: 'l-' + Date.now(),
       title: 'New Lesson',
+      description: '',
       isLocked: false,
       contents: [],
-      quiz: { id: 'q-' + Date.now(), title: 'Quiz', questions: [] }
+      quiz: { 
+          id: 'q-' + Date.now(), 
+          title: 'Lesson Quiz', 
+          questions: [],
+          timeLimit: 10,
+          passingScore: 50
+      }
     };
     setEditingCourse({
       ...editingCourse,
       lessons: [...(editingCourse.lessons || []), newLesson]
     });
     setExpandedLesson(newLesson.id);
+    setActiveLessonTab('content');
   };
 
   const updateLesson = (index: number, field: keyof Lesson, value: any) => {
@@ -80,14 +94,15 @@ export const CoursesTab: React.FC = () => {
     setEditingCourse({ ...editingCourse, lessons: updatedLessons });
   };
 
-  const addResource = (lessonIndex: number, type: 'video' | 'audio' | 'pdf') => {
+  const addResource = (lessonIndex: number, type: 'video' | 'audio' | 'pdf' | 'article') => {
     if (!editingCourse?.lessons) return;
     const updatedLessons = [...editingCourse.lessons];
     const newContent: ContentItem = {
       id: 'r-' + Date.now(),
       type,
-      title: `New ${type}`,
-      url: ''
+      title: `New ${type.charAt(0).toUpperCase() + type.slice(1)}`,
+      url: '',
+      textContent: type === 'article' ? '' : undefined
     };
     updatedLessons[lessonIndex].contents = [...(updatedLessons[lessonIndex].contents || []), newContent];
     setEditingCourse({ ...editingCourse, lessons: updatedLessons });
@@ -132,7 +147,7 @@ export const CoursesTab: React.FC = () => {
          <div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-white tracking-tight">Course Management</h2>
             <p className="text-sm text-gray-500 dark:text-gray-400">
-              {isOwner ? 'Create, edit, and organize curriculum content.' : 'View course curriculum and status.'}
+              {isOwner ? 'Build and manage your educational curriculum.' : 'View course curriculum and status.'}
             </p>
          </div>
          {isOwner && (
@@ -239,7 +254,7 @@ export const CoursesTab: React.FC = () => {
 
              <div className="flex-1 flex overflow-hidden">
                 {/* Left Sidebar: Metadata */}
-                <div className="w-80 border-r border-gray-200 dark:border-[#333] overflow-y-auto bg-gray-50/50 dark:bg-[#181818] p-6">
+                <div className="w-72 border-r border-gray-200 dark:border-[#333] overflow-y-auto bg-gray-50/50 dark:bg-[#181818] p-6 hidden lg:block">
                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Course Settings</h4>
                    
                    <div className="space-y-5">
@@ -279,14 +294,14 @@ export const CoursesTab: React.FC = () => {
                 {/* Main Content: Lessons */}
                 <div className="flex-1 bg-white dark:bg-[#1E1E1E] flex flex-col min-w-0">
                    {/* Lessons Toolbar */}
-                   <div className="px-8 py-6 border-b border-gray-200 dark:border-[#333] flex justify-between items-center">
+                   <div className="px-8 py-6 border-b border-gray-200 dark:border-[#333] flex justify-between items-center bg-gray-50/30 dark:bg-[#202020]">
                       <div>
-                         <h4 className="text-lg font-bold text-gray-900 dark:text-white">Syllabus</h4>
-                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Manage lessons, videos, and quizzes.</p>
+                         <h4 className="text-lg font-bold text-gray-900 dark:text-white">Curriculum Builder</h4>
+                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Structure your lessons, add media, and configure exams.</p>
                       </div>
                       <button 
                         onClick={addLesson}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-bold hover:opacity-90 transition-all"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-bold hover:opacity-90 transition-all shadow-md"
                       >
                         <Plus size={16} /> Add Lesson
                       </button>
@@ -296,19 +311,22 @@ export const CoursesTab: React.FC = () => {
                       {(editingCourse.lessons || []).length === 0 && (
                          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-300 dark:border-[#333] rounded-xl text-gray-400">
                             <Layout size={48} className="mb-4 opacity-20" />
-                            <p className="font-bold">No lessons yet</p>
-                            <p className="text-xs mt-1">Click "Add Lesson" to start building curriculum.</p>
+                            <p className="font-bold">Curriculum is empty</p>
+                            <p className="text-xs mt-1">Click "Add Lesson" to start building.</p>
                          </div>
                       )}
 
                       {(editingCourse.lessons || []).map((lesson, index) => (
                         <div key={lesson.id} className="bg-white dark:bg-[#1E1E1E] border border-gray-200 dark:border-[#333] rounded-xl shadow-sm overflow-hidden transition-all">
-                           {/* Lesson Header */}
+                           {/* Lesson Accordion Header */}
                            <div 
-                             className="flex items-center gap-4 p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-[#252525] border-b border-transparent hover:border-gray-200 dark:hover:border-[#333] transition-colors"
-                             onClick={() => setExpandedLesson(expandedLesson === lesson.id ? null : lesson.id)}
+                             className={`flex items-center gap-4 p-4 cursor-pointer transition-colors ${expandedLesson === lesson.id ? 'bg-gray-50 dark:bg-[#252525] border-b border-gray-200 dark:border-[#333]' : 'hover:bg-gray-50 dark:hover:bg-[#252525]'}`}
+                             onClick={() => {
+                                setExpandedLesson(expandedLesson === lesson.id ? null : lesson.id);
+                                setActiveLessonTab('content');
+                             }}
                            >
-                              <div className="w-8 h-8 rounded-lg bg-gray-100 dark:bg-[#252525] flex items-center justify-center text-gray-500 border border-gray-200 dark:border-[#333]">
+                              <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#333] flex items-center justify-center text-gray-600 dark:text-gray-400 text-xs font-bold border border-gray-300 dark:border-[#444]">
                                  {index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -317,21 +335,14 @@ export const CoursesTab: React.FC = () => {
                                    value={lesson.title}
                                    onClick={(e) => e.stopPropagation()}
                                    onChange={(e) => updateLesson(index, 'title', e.target.value)}
-                                   className="w-full bg-transparent border-none outline-none font-bold text-gray-900 dark:text-white placeholder:text-gray-400"
-                                   placeholder="Lesson Title"
+                                   className="w-full bg-transparent border-none outline-none font-bold text-gray-900 dark:text-white placeholder:text-gray-400 text-sm"
+                                   placeholder="Lesson Title (e.g., Introduction to Anatomy)"
                                  />
                               </div>
                               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                 <button 
-                                   onClick={() => updateLesson(index, 'isLocked', !lesson.isLocked)}
-                                   className={`px-3 py-1.5 rounded-md text-xs font-bold border transition-colors ${
-                                      lesson.isLocked 
-                                      ? 'bg-gray-100 dark:bg-[#333] text-gray-500 border-gray-200 dark:border-[#444]' 
-                                      : 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400 border-green-200 dark:border-green-800'
-                                   }`}
-                                 >
-                                    {lesson.isLocked ? 'Locked' : 'Published'}
-                                 </button>
+                                 <span className="text-[10px] text-gray-400 px-2 py-1 bg-gray-100 dark:bg-[#333] rounded">
+                                    {(lesson.contents?.length || 0)} items
+                                 </span>
                                  <button 
                                    onClick={() => {
                                       const updated = [...editingCourse.lessons!];
@@ -346,160 +357,309 @@ export const CoursesTab: React.FC = () => {
                               </div>
                            </div>
 
-                           {/* Lesson Body */}
+                           {/* Expanded Lesson Content */}
                            {expandedLesson === lesson.id && (
-                              <div className="p-6 bg-gray-50/50 dark:bg-[#151515] border-t border-gray-200 dark:border-[#333] grid grid-cols-1 lg:grid-cols-2 gap-8 animate-in slide-in-from-top-2">
-                                 
-                                 {/* Column 1: Media Content */}
-                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                       <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Media & Resources</h5>
-                                       <div className="flex gap-2">
-                                          <button onClick={() => addResource(index, 'video')} className="p-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:text-blue-500"><Video size={14}/></button>
-                                          <button onClick={() => addResource(index, 'audio')} className="p-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:text-purple-500"><Mic size={14}/></button>
-                                          <button onClick={() => addResource(index, 'pdf')} className="p-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:text-red-500"><FileText size={14}/></button>
-                                       </div>
-                                    </div>
+                              <div className="flex flex-col h-[500px]">
+                                 {/* Internal Tabs */}
+                                 <div className="flex border-b border-gray-200 dark:border-[#333] bg-gray-50/50 dark:bg-[#1A1A1A] px-4">
+                                    {[
+                                        { id: 'content', label: 'Content & Media', icon: Layout },
+                                        { id: 'quiz', label: 'Quiz & Exam', icon: Brain },
+                                        { id: 'settings', label: 'Settings', icon: Settings },
+                                    ].map(tab => (
+                                        <button
+                                            key={tab.id}
+                                            onClick={() => setActiveLessonTab(tab.id as any)}
+                                            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors ${
+                                                activeLessonTab === tab.id 
+                                                ? 'border-[#F38020] text-[#F38020] bg-white dark:bg-[#1E1E1E]' 
+                                                : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                                            }`}
+                                        >
+                                            <tab.icon size={14} /> {tab.label}
+                                        </button>
+                                    ))}
+                                 </div>
+
+                                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50/30 dark:bg-[#181818]">
                                     
-                                    <div className="space-y-2">
-                                       {(lesson.contents || []).length === 0 && <div className="text-xs text-gray-400 italic text-center py-4 border border-dashed border-gray-300 dark:border-[#444] rounded">No resources added</div>}
-                                       
-                                       {(lesson.contents || []).map((content, cIdx) => (
-                                          <div key={content.id} className="bg-white dark:bg-[#1E1E1E] p-3 rounded-lg border border-gray-200 dark:border-[#333] space-y-2">
-                                             <div className="flex items-center gap-2">
-                                                <div className="text-gray-400">
-                                                   {content.type === 'video' ? <Video size={14}/> : content.type === 'audio' ? <Mic size={14}/> : <FileText size={14}/>}
+                                    {/* TAB 1: CONTENT */}
+                                    {activeLessonTab === 'content' && (
+                                        <div className="space-y-6">
+                                            <div className="flex justify-between items-center">
+                                                <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Lesson Materials</h5>
+                                                <div className="flex gap-2">
+                                                    <button onClick={() => addResource(index, 'video')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-blue-400 hover:text-blue-500 text-xs font-medium transition-colors"><Video size={14}/> Video</button>
+                                                    <button onClick={() => addResource(index, 'audio')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-purple-400 hover:text-purple-500 text-xs font-medium transition-colors"><Mic size={14}/> Audio</button>
+                                                    <button onClick={() => addResource(index, 'pdf')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-red-400 hover:text-red-500 text-xs font-medium transition-colors"><FileText size={14}/> PDF</button>
+                                                    <button onClick={() => addResource(index, 'article')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-orange-400 hover:text-orange-500 text-xs font-medium transition-colors"><AlignLeft size={14}/> Text</button>
                                                 </div>
-                                                <input 
-                                                  value={content.title}
-                                                  onChange={(e) => {
-                                                     const updated = [...editingCourse.lessons!];
-                                                     updated[index].contents[cIdx].title = e.target.value;
-                                                     setEditingCourse({...editingCourse, lessons: updated});
-                                                  }}
-                                                  className="flex-1 text-xs font-bold bg-transparent outline-none text-gray-900 dark:text-white"
-                                                  placeholder="Resource Title"
-                                                />
-                                                <button 
-                                                  onClick={() => {
-                                                     const updated = [...editingCourse.lessons!];
-                                                     updated[index].contents.splice(cIdx, 1);
-                                                     setEditingCourse({...editingCourse, lessons: updated});
-                                                  }}
-                                                  className="text-gray-400 hover:text-red-500"
-                                                >
-                                                   <X size={14}/>
-                                                </button>
-                                             </div>
-                                             <input 
-                                                value={content.url}
-                                                onChange={(e) => {
-                                                   const updated = [...editingCourse.lessons!];
-                                                   updated[index].contents[cIdx].url = e.target.value;
-                                                   setEditingCourse({...editingCourse, lessons: updated});
-                                                }}
-                                                className="w-full text-xs bg-gray-50 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded px-2 py-1.5 outline-none focus:border-brand-orange text-gray-600 dark:text-gray-300"
-                                                placeholder="URL (https://...)"
-                                             />
-                                          </div>
-                                       ))}
-                                    </div>
-                                 </div>
+                                            </div>
 
-                                 {/* Column 2: Quiz Editor */}
-                                 <div className="space-y-4">
-                                    <div className="flex justify-between items-center">
-                                       <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Quiz Questions</h5>
-                                       <div className="flex gap-2">
-                                          <label className="cursor-pointer p-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:text-green-500 text-xs flex items-center gap-1">
-                                             <FileJson size={14}/> Import
-                                             <input type="file" className="hidden" accept=".json" onChange={(e) => handleFileUpload(e, index)} />
-                                          </label>
-                                          <button 
-                                            onClick={() => {
-                                               const updated = [...editingCourse.lessons!];
-                                               const quiz = updated[index].quiz || { id: 'q-'+Date.now(), title: 'Quiz', questions: [] };
-                                               quiz.questions.push({
-                                                  id: 'qn-'+Date.now(), text: '', options: ['', '', '', ''], correctOptionIndex: 0
-                                               });
-                                               updated[index].quiz = quiz;
-                                               setEditingCourse({...editingCourse, lessons: updated});
-                                            }}
-                                            className="p-1.5 bg-brand-orange/10 text-brand-orange border border-brand-orange/20 rounded hover:bg-brand-orange/20"
-                                          >
-                                             <Plus size={14}/>
-                                          </button>
-                                       </div>
-                                    </div>
+                                            <div className="space-y-3">
+                                                {(lesson.contents || []).length === 0 && (
+                                                    <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-[#333] rounded-lg">
+                                                        <Upload size={32} className="mx-auto text-gray-300 mb-2" />
+                                                        <p className="text-xs text-gray-400">No content added yet. Choose a type above.</p>
+                                                    </div>
+                                                )}
 
-                                    <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
-                                       {(!lesson.quiz?.questions || lesson.quiz.questions.length === 0) && (
-                                          <div className="text-xs text-gray-400 italic text-center py-4 border border-dashed border-gray-300 dark:border-[#444] rounded">No questions added</div>
-                                       )}
-
-                                       {(lesson.quiz?.questions || []).map((q, qIdx) => (
-                                          <div key={q.id} className="bg-white dark:bg-[#1E1E1E] p-3 rounded-lg border border-gray-200 dark:border-[#333] group">
-                                             <div className="flex gap-2 mb-2">
-                                                <span className="text-xs font-bold text-brand-orange mt-1">Q{qIdx+1}</span>
-                                                <textarea 
-                                                  value={q.text}
-                                                  onChange={(e) => {
-                                                     const updated = [...editingCourse.lessons!];
-                                                     updated[index].quiz!.questions[qIdx].text = e.target.value;
-                                                     setEditingCourse({...editingCourse, lessons: updated});
-                                                  }}
-                                                  className="flex-1 text-sm bg-transparent outline-none resize-none h-10 border-b border-transparent focus:border-brand-orange text-gray-900 dark:text-white"
-                                                  placeholder="Enter question text..."
-                                                />
-                                                <button 
-                                                  onClick={() => {
-                                                     const updated = [...editingCourse.lessons!];
-                                                     updated[index].quiz!.questions.splice(qIdx, 1);
-                                                     setEditingCourse({...editingCourse, lessons: updated});
-                                                  }}
-                                                  className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
-                                                >
-                                                   <Trash2 size={14}/>
-                                                </button>
-                                             </div>
-                                             
-                                             <div className="grid grid-cols-2 gap-2 pl-6">
-                                                {q.options.map((opt, oIdx) => (
-                                                   <div key={oIdx} className="flex items-center gap-2">
-                                                      <input 
-                                                        type="radio" 
-                                                        name={`q-${q.id}`}
-                                                        checked={q.correctOptionIndex === oIdx}
-                                                        onChange={() => {
-                                                           const updated = [...editingCourse.lessons!];
-                                                           updated[index].quiz!.questions[qIdx].correctOptionIndex = oIdx;
-                                                           setEditingCourse({...editingCourse, lessons: updated});
-                                                        }}
-                                                        className="accent-brand-orange cursor-pointer"
-                                                      />
-                                                      <input 
-                                                        type="text" 
-                                                        value={opt}
-                                                        onChange={(e) => {
-                                                           const updated = [...editingCourse.lessons!];
-                                                           updated[index].quiz!.questions[qIdx].options[oIdx] = e.target.value;
-                                                           setEditingCourse({...editingCourse, lessons: updated});
-                                                        }}
-                                                        className={`flex-1 text-xs px-2 py-1 rounded bg-gray-50 dark:bg-[#252525] border outline-none text-gray-700 dark:text-gray-300 ${
-                                                           q.correctOptionIndex === oIdx 
-                                                           ? 'border-green-400 bg-green-50 dark:bg-green-900/10' 
-                                                           : 'border-gray-200 dark:border-[#333] focus:border-brand-orange'
-                                                        }`}
-                                                        placeholder={`Option ${oIdx+1}`}
-                                                      />
-                                                   </div>
+                                                {(lesson.contents || []).map((content, cIdx) => (
+                                                    <div key={content.id} className="bg-white dark:bg-[#1E1E1E] p-4 rounded-lg border border-gray-200 dark:border-[#333] shadow-sm group hover:border-blue-200 dark:hover:border-blue-900 transition-colors">
+                                                        <div className="flex items-start gap-4">
+                                                            <div className="mt-1 text-gray-400">
+                                                                {content.type === 'video' ? <Video size={18}/> : content.type === 'audio' ? <Mic size={18}/> : content.type === 'pdf' ? <FileText size={18}/> : <AlignLeft size={18}/>}
+                                                            </div>
+                                                            <div className="flex-1 space-y-3">
+                                                                <div className="flex justify-between">
+                                                                    <input 
+                                                                        value={content.title}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...editingCourse.lessons!];
+                                                                            updated[index].contents[cIdx].title = e.target.value;
+                                                                            setEditingCourse({...editingCourse, lessons: updated});
+                                                                        }}
+                                                                        className="w-full text-sm font-bold bg-transparent outline-none text-gray-900 dark:text-white placeholder:text-gray-300"
+                                                                        placeholder="Resource Title"
+                                                                    />
+                                                                    <button 
+                                                                        onClick={() => {
+                                                                            const updated = [...editingCourse.lessons!];
+                                                                            updated[index].contents.splice(cIdx, 1);
+                                                                            setEditingCourse({...editingCourse, lessons: updated});
+                                                                        }}
+                                                                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                                                                    >
+                                                                        <X size={16}/>
+                                                                    </button>
+                                                                </div>
+                                                                
+                                                                {content.type !== 'article' ? (
+                                                                    <input 
+                                                                        value={content.url}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...editingCourse.lessons!];
+                                                                            updated[index].contents[cIdx].url = e.target.value;
+                                                                            setEditingCourse({...editingCourse, lessons: updated});
+                                                                        }}
+                                                                        className="w-full text-xs bg-gray-50 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded px-3 py-2 outline-none focus:border-brand-orange text-gray-600 dark:text-gray-300 font-mono"
+                                                                        placeholder="https://..."
+                                                                    />
+                                                                ) : (
+                                                                    <textarea 
+                                                                        value={content.textContent || ''}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...editingCourse.lessons!];
+                                                                            updated[index].contents[cIdx].textContent = e.target.value;
+                                                                            setEditingCourse({...editingCourse, lessons: updated});
+                                                                        }}
+                                                                        className="w-full h-24 text-xs bg-gray-50 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded px-3 py-2 outline-none focus:border-brand-orange text-gray-600 dark:text-gray-300 resize-none"
+                                                                        placeholder="Write article content here..."
+                                                                    />
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
                                                 ))}
-                                             </div>
-                                          </div>
-                                       ))}
-                                    </div>
-                                 </div>
+                                            </div>
+                                        </div>
+                                    )}
 
+                                    {/* TAB 2: QUIZ */}
+                                    {activeLessonTab === 'quiz' && (
+                                        <div className="space-y-6">
+                                            {/* Quiz Config Bar */}
+                                            <div className="bg-blue-50 dark:bg-[#1a202c] p-4 rounded-lg border border-blue-100 dark:border-[#2d3748] flex flex-wrap gap-4 items-end">
+                                                <div className="flex-1 min-w-[200px]">
+                                                    <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Quiz Title</label>
+                                                    <input 
+                                                        value={lesson.quiz?.title || 'Lesson Quiz'}
+                                                        onChange={(e) => updateLesson(index, 'quiz', { ...lesson.quiz, title: e.target.value })}
+                                                        className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none"
+                                                    />
+                                                </div>
+                                                <div className="w-24">
+                                                    <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Passing %</label>
+                                                    <input 
+                                                        type="number"
+                                                        value={lesson.quiz?.passingScore || 50}
+                                                        onChange={(e) => updateLesson(index, 'quiz', { ...lesson.quiz, passingScore: e.target.value })}
+                                                        className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none text-center"
+                                                    />
+                                                </div>
+                                                <div className="w-24">
+                                                    <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Time (Min)</label>
+                                                    <input 
+                                                        type="number"
+                                                        value={lesson.quiz?.timeLimit || 10}
+                                                        onChange={(e) => updateLesson(index, 'quiz', { ...lesson.quiz, timeLimit: e.target.value })}
+                                                        className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none text-center"
+                                                    />
+                                                </div>
+                                                <div className="flex gap-2">
+                                                    <label className="cursor-pointer p-2 bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded hover:text-green-500 text-blue-500" title="Import JSON">
+                                                        <FileJson size={18}/>
+                                                        <input type="file" className="hidden" accept=".json" onChange={(e) => handleFileUpload(e, index)} />
+                                                    </label>
+                                                    <button 
+                                                        onClick={() => {
+                                                            const updated = [...editingCourse.lessons!];
+                                                            const quiz = updated[index].quiz || { id: 'q-'+Date.now(), title: 'Quiz', questions: [] };
+                                                            quiz.questions.push({
+                                                                id: 'qn-'+Date.now(), text: '', options: ['', '', '', ''], correctOptionIndex: 0
+                                                            });
+                                                            updated[index].quiz = quiz;
+                                                            setEditingCourse({...editingCourse, lessons: updated});
+                                                        }}
+                                                        className="p-2 bg-brand-orange text-white rounded hover:bg-orange-600 shadow-sm flex items-center gap-2 text-xs font-bold px-4"
+                                                    >
+                                                        <Plus size={16}/> Add Question
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            {/* Questions List */}
+                                            <div className="space-y-4">
+                                                {(!lesson.quiz?.questions || lesson.quiz.questions.length === 0) && (
+                                                    <div className="text-center py-12 text-gray-400">
+                                                        <Brain size={48} className="mx-auto mb-2 opacity-20" />
+                                                        <p>No questions yet.</p>
+                                                    </div>
+                                                )}
+
+                                                {(lesson.quiz?.questions || []).map((q, qIdx) => (
+                                                    <div key={q.id} className="bg-white dark:bg-[#1E1E1E] p-4 rounded-lg border border-gray-200 dark:border-[#333] relative">
+                                                        <div className="absolute top-4 right-4">
+                                                            <button 
+                                                                onClick={() => {
+                                                                    const updated = [...editingCourse.lessons!];
+                                                                    updated[index].quiz!.questions.splice(qIdx, 1);
+                                                                    setEditingCourse({...editingCourse, lessons: updated});
+                                                                }}
+                                                                className="text-gray-400 hover:text-red-500"
+                                                            >
+                                                                <Trash2 size={16}/>
+                                                            </button>
+                                                        </div>
+                                                        
+                                                        <div className="mb-4 pr-8">
+                                                            <span className="text-xs font-bold text-brand-orange mb-1 block">Question {qIdx + 1}</span>
+                                                            <textarea 
+                                                                value={q.text}
+                                                                onChange={(e) => {
+                                                                    const updated = [...editingCourse.lessons!];
+                                                                    updated[index].quiz!.questions[qIdx].text = e.target.value;
+                                                                    setEditingCourse({...editingCourse, lessons: updated});
+                                                                }}
+                                                                className="w-full bg-transparent text-sm font-medium outline-none resize-none border-b border-transparent focus:border-gray-200 dark:focus:border-[#333]"
+                                                                placeholder="Enter question text here..."
+                                                                rows={2}
+                                                            />
+                                                        </div>
+
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                                                            {q.options.map((opt, oIdx) => (
+                                                                <div key={oIdx} className="flex items-center gap-2 group">
+                                                                    <input 
+                                                                        type="radio" 
+                                                                        name={`q-${q.id}`}
+                                                                        checked={q.correctOptionIndex === oIdx}
+                                                                        onChange={() => {
+                                                                            const updated = [...editingCourse.lessons!];
+                                                                            updated[index].quiz!.questions[qIdx].correctOptionIndex = oIdx;
+                                                                            setEditingCourse({...editingCourse, lessons: updated});
+                                                                        }}
+                                                                        className="accent-brand-orange cursor-pointer w-4 h-4"
+                                                                    />
+                                                                    <input 
+                                                                        type="text" 
+                                                                        value={opt}
+                                                                        onChange={(e) => {
+                                                                            const updated = [...editingCourse.lessons!];
+                                                                            updated[index].quiz!.questions[qIdx].options[oIdx] = e.target.value;
+                                                                            setEditingCourse({...editingCourse, lessons: updated});
+                                                                        }}
+                                                                        className={`flex-1 text-xs px-3 py-2 rounded bg-gray-50 dark:bg-[#252525] border outline-none transition-colors ${
+                                                                            q.correctOptionIndex === oIdx 
+                                                                            ? 'border-green-400 bg-green-50 dark:bg-green-900/10 text-green-700 dark:text-green-300' 
+                                                                            : 'border-gray-200 dark:border-[#333] focus:border-brand-orange text-gray-700 dark:text-gray-300'
+                                                                        }`}
+                                                                        placeholder={`Option ${oIdx+1}`}
+                                                                    />
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                        
+                                                        <div className="mt-3 pt-3 border-t border-gray-100 dark:border-[#333]">
+                                                            <input 
+                                                                type="text" 
+                                                                value={q.explanation || ''}
+                                                                onChange={(e) => {
+                                                                    const updated = [...editingCourse.lessons!];
+                                                                    updated[index].quiz!.questions[qIdx].explanation = e.target.value;
+                                                                    setEditingCourse({...editingCourse, lessons: updated});
+                                                                }}
+                                                                className="w-full text-xs text-gray-500 bg-transparent outline-none italic"
+                                                                placeholder="Add explanation for the correct answer (optional)..."
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* TAB 3: SETTINGS */}
+                                    {activeLessonTab === 'settings' && (
+                                        <div className="space-y-6">
+                                            <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-lg border border-gray-200 dark:border-[#333]">
+                                                <h5 className="font-bold text-gray-900 dark:text-white mb-4">Lesson Visibility</h5>
+                                                
+                                                <div className="flex items-center justify-between mb-4">
+                                                    <div>
+                                                        <p className="text-sm font-medium text-gray-700 dark:text-gray-300">Lock Lesson</p>
+                                                        <p className="text-xs text-gray-500">Prevent students from accessing this lesson.</p>
+                                                    </div>
+                                                    <button 
+                                                        onClick={() => updateLesson(index, 'isLocked', !lesson.isLocked)}
+                                                        className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${lesson.isLocked ? 'bg-red-500' : 'bg-gray-300 dark:bg-[#444]'}`}
+                                                    >
+                                                        <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${lesson.isLocked ? 'translate-x-6' : 'translate-x-1'}`} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="bg-white dark:bg-[#1E1E1E] p-6 rounded-lg border border-gray-200 dark:border-[#333]">
+                                                <h5 className="font-bold text-gray-900 dark:text-white mb-4">Lesson Metadata</h5>
+                                                <div className="space-y-4">
+                                                    <div>
+                                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Description</label>
+                                                        <textarea 
+                                                            value={lesson.description || ''}
+                                                            onChange={(e) => updateLesson(index, 'description', e.target.value)}
+                                                            className="w-full bg-gray-50 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded p-3 text-sm outline-none resize-none h-24"
+                                                            placeholder="Brief overview of what this lesson covers..."
+                                                        />
+                                                    </div>
+                                                    <div>
+                                                        <label className="text-xs font-bold text-gray-500 uppercase mb-1 block">Estimated Duration</label>
+                                                        <div className="flex items-center gap-2">
+                                                            <Clock size={16} className="text-gray-400"/>
+                                                            <input 
+                                                                type="text" 
+                                                                value={lesson.duration || ''}
+                                                                onChange={(e) => updateLesson(index, 'duration', e.target.value)}
+                                                                className="flex-1 bg-gray-50 dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded px-3 py-2 text-sm outline-none"
+                                                                placeholder="e.g. 45 mins"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                 </div>
                               </div>
                            )}
                         </div>

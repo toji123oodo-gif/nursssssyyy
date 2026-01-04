@@ -1,12 +1,11 @@
 
-export type ContentType = 'audio' | 'pdf' | 'video';
+export type ContentType = 'audio' | 'pdf' | 'video' | 'article';
 
 export interface Question {
   id: string;
   text: string;
   options: string[];
   correctOptionIndex: number;
-  // Added explanation to support QuizPlayer.tsx
   explanation?: string;
 }
 
@@ -14,6 +13,9 @@ export interface Quiz {
   id: string;
   title: string;
   questions: Question[];
+  // New Fields
+  timeLimit?: number; // in minutes
+  passingScore?: number; // percentage
 }
 
 export interface ContentItem {
@@ -21,18 +23,19 @@ export interface ContentItem {
   type: ContentType;
   title: string;
   url: string;
-  // Added duration and fileSize to support data/courses.ts
   duration?: string;
   fileSize?: string;
+  // For articles
+  textContent?: string;
 }
 
 export interface Lesson {
   id: string;
   title: string;
+  description?: string; // New
   duration?: string;
   contents: ContentItem[];
   quiz?: Quiz;
-  // Added isLocked to support CoursesTab.tsx
   isLocked?: boolean;
 }
 
@@ -55,7 +58,6 @@ export interface User {
   xp: number;
   completedLessons?: string[];
   subscriptionTier: 'free' | 'pro';
-  // Extended properties for full Admin Control
   level?: number;
   streak?: number;
   joinedAt?: string;
@@ -64,7 +66,6 @@ export interface User {
   lastSeen?: string;
   quizGrades?: Record<string, number>;
   
-  // New Admin Fields
   university?: string;
   faculty?: string;
   academicYear?: string;
@@ -74,7 +75,6 @@ export interface User {
   subscriptionExpiry?: string;
 }
 
-// Added ActivationCode interface for Admin components
 export interface ActivationCode {
   id: string;
   code: string;
@@ -83,7 +83,6 @@ export interface ActivationCode {
   createdAt: string;
 }
 
-// Added Exam interface for ExamHub.tsx
 export interface Exam {
   id: string;
   title: string;
