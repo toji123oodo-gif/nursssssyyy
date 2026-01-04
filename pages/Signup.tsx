@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { Link, useNavigate } = ReactRouterDOM as any;
 import { Cloud, Loader2, AlertCircle, Check } from 'lucide-react';
@@ -9,8 +9,15 @@ export const Signup: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const { signup } = useApp();
+  const { user, signup } = useApp();
   const navigate = useNavigate();
+
+  // Automatically redirect if user is logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -19,7 +26,7 @@ export const Signup: React.FC = () => {
 
     try {
         await signup(formData.email, formData.password, formData.name, formData.phone);
-        navigate('/dashboard');
+        // Navigation handled by useEffect
     } catch (err: any) {
         setError('Could not create account. Please try again.');
         setIsLoading(false);

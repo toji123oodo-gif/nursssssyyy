@@ -5,7 +5,8 @@ const { Link, useLocation } = ReactRouterDOM as any;
 import { 
   Home, Book, Wallet, User, LogOut, Menu, X, 
   Activity, ChevronRight, Bell, Settings, Cloud,
-  Moon, Sun, Users, HelpCircle, ExternalLink, Search, Command
+  Moon, Sun, Users, HelpCircle, ExternalLink, Search, Command,
+  Calendar, Video, Award, Trophy
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CommandPalette } from './CommandPalette';
@@ -30,9 +31,17 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
   const navLinks = [
     { path: '/dashboard', label: 'Overview', icon: Home },
+    { path: '/schedule', label: 'Schedule', icon: Calendar },
     { path: '/dashboard/courses', label: 'My Courses', icon: Book },
     { path: '/community', label: 'Community', icon: Users },
     { path: '/wallet', label: 'Billing', icon: Wallet },
+  ];
+
+  const toolsLinks = [
+    { path: '/video-ai', label: 'AI Video Analysis', icon: Video },
+    { path: '/flashcards', label: 'Flashcards', icon: Activity },
+    { path: '/certificates', label: 'Certificates', icon: Award },
+    { path: '/leaderboard', label: 'Rankings', icon: Trophy },
   ];
 
   const isActive = (path: string) => {
@@ -45,7 +54,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#101010] flex font-sans text-sm">
       <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} />
       
-      {/* Sidebar - Cloudflare Style */}
+      {/* Sidebar - Desktop Only */}
       <aside className={`fixed inset-y-0 left-0 z-[100] w-64 bg-white dark:bg-[#1E1E1E] border-r border-[#E5E5E5] dark:border-[#333] flex flex-col transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:static`}>
         
         {/* Logo Area */}
@@ -62,7 +71,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         {/* Navigation */}
         <div className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
           <div className="px-3 py-2 text-[10px] font-bold text-muted uppercase tracking-wider">
-            Account Home
+            Workspace
           </div>
 
           {navLinks.map(link => (
@@ -82,16 +91,30 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           <div className="my-4 border-t border-[#E5E5E5] dark:border-[#333]"></div>
 
           <div className="px-3 py-2 text-[10px] font-bold text-muted uppercase tracking-wider">
-            Configuration
+            Tools
           </div>
-          <button className="w-full flex items-center gap-3 px-3 py-2 rounded-[4px] text-sm font-medium text-muted hover:bg-gray-100 dark:hover:bg-[#2C2C2C] hover:text-main transition-colors text-left">
-            <Settings size={16} /> Preferences
-          </button>
-           <button className="w-full flex items-center gap-3 px-3 py-2 rounded-[4px] text-sm font-medium text-muted hover:bg-gray-100 dark:hover:bg-[#2C2C2C] hover:text-main transition-colors text-left">
-            <Activity size={16} /> Audit Logs
-          </button>
-          
-           <div className="my-4 border-t border-[#E5E5E5] dark:border-[#333]"></div>
+          {toolsLinks.map(link => (
+            <Link
+              key={link.path}
+              to={link.path}
+              className={`flex items-center gap-3 px-3 py-2 rounded-[4px] text-sm font-medium transition-colors ${
+                isActive(link.path) 
+                ? 'bg-blue-50 dark:bg-[#2B3A4F] text-[#0051C3] dark:text-[#68b5fb]' 
+                : 'text-[#595959] dark:text-[#A3A3A3] hover:bg-gray-100 dark:hover:bg-[#2C2C2C] hover:text-main'
+              }`}
+            >
+              <link.icon size={16} /> {link.label}
+            </Link>
+          ))}
+
+          <div className="my-4 border-t border-[#E5E5E5] dark:border-[#333]"></div>
+
+          <div className="px-3 py-2 text-[10px] font-bold text-muted uppercase tracking-wider">
+            Support
+          </div>
+           <Link to="/help" className="flex items-center gap-3 px-3 py-2 rounded-[4px] text-sm font-medium text-muted hover:bg-gray-100 dark:hover:bg-[#2C2C2C] hover:text-main transition-colors">
+            <HelpCircle size={16} /> Help Center
+           </Link>
            <Link to="/profile" className="flex items-center gap-3 px-3 py-2 rounded-[4px] text-sm font-medium text-muted hover:bg-gray-100 dark:hover:bg-[#2C2C2C] hover:text-main transition-colors">
               <User size={16} /> My Profile
            </Link>
@@ -121,9 +144,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       </aside>
 
       {/* Main Content */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className="flex-1 flex flex-col min-w-0 mb-16 lg:mb-0"> {/* Margin bottom for mobile nav */}
         {/* Top Header */}
-        <header className="h-14 bg-white dark:bg-[#1E1E1E] border-b border-[#E5E5E5] dark:border-[#333] flex items-center justify-between px-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10">
+        <header className="h-14 bg-white dark:bg-[#1E1E1E] border-b border-[#E5E5E5] dark:border-[#333] flex items-center justify-between px-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10 sticky top-0">
           <div className="flex items-center gap-3 flex-1">
             <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted hover:text-main">
               <Menu size={20} />
@@ -143,15 +166,12 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
           </div>
 
           <div className="flex items-center gap-4">
-             <button className="text-xs font-medium text-muted hover:text-main flex items-center gap-1">
-                Help <ExternalLink size={12} />
-             </button>
-             <div className="h-4 w-px bg-[#E5E5E5] dark:bg-[#333]"></div>
+             <div className="h-4 w-px bg-[#E5E5E5] dark:bg-[#333] hidden md:block"></div>
              <button className="text-muted hover:text-main relative">
                 <Bell size={18} />
                 <span className="absolute top-0 right-0 w-1.5 h-1.5 bg-red-500 rounded-full border border-white dark:border-[#1E1E1E]"></span>
              </button>
-             <button onClick={logout} className="text-xs font-medium text-[#D94F4F] hover:underline">
+             <button onClick={logout} className="text-xs font-medium text-[#D94F4F] hover:underline hidden md:block">
                Log Out
              </button>
           </div>

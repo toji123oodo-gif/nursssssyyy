@@ -106,7 +106,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           lastSeen: new Date().toISOString(),
           lastDevice: getDeviceInfo()
       }, { merge: true });
-    } catch (e) {}
+    } catch (e) {
+      console.error("Sync Error:", e);
+    }
   };
 
   useEffect(() => {
@@ -147,8 +149,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           const newToken = jwtUtils.sign({ sub: baseUser.id, name: baseUser.name, email: baseUser.email });
           jwtUtils.saveToken(newToken);
           setToken(newToken);
-          syncUserToCloud(baseUser);
-        } catch (error) {}
+          await syncUserToCloud(baseUser); // Await this to ensure db write attempts finish
+        } catch (error) {
+          console.error("Auth State Change Error:", error);
+        }
       } else {
         setUser(null);
         setToken(null);

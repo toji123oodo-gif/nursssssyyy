@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate, Link } = ReactRouterDOM as any;
 import { Cloud, Loader2, AlertCircle, ArrowLeft, ShieldCheck } from 'lucide-react';
@@ -19,8 +19,15 @@ export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   
-  const { login, loginWithGoogle } = useApp();
+  const { user, login, loginWithGoogle } = useApp();
   const navigate = useNavigate();
+
+  // Automatically redirect if user is logged in
+  useEffect(() => {
+    if (user) {
+      navigate('/dashboard', { replace: true });
+    }
+  }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -28,7 +35,7 @@ export const Login: React.FC = () => {
     setError('');
     try {
       await login(email, password);
-      navigate('/dashboard');
+      // Navigation handled by useEffect
     } catch (err) {
       setError('Invalid credentials. Please verify your email and password.');
       setIsLoading(false);
@@ -37,10 +44,12 @@ export const Login: React.FC = () => {
 
   const handleGoogle = async () => {
      try {
+        setIsLoading(true);
         await loginWithGoogle();
-        navigate('/dashboard');
+        // Navigation handled by useEffect
      } catch (e) {
         setError('Google authentication failed.');
+        setIsLoading(false);
      }
   };
 
@@ -111,10 +120,15 @@ export const Login: React.FC = () => {
 
            <button 
              onClick={handleGoogle}
+             disabled={isLoading}
              className="w-full btn-secondary py-2 justify-center"
            >
-             <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
-             Continue with Google
+             {isLoading ? <Loader2 className="animate-spin" size={16} /> : (
+                <>
+                   <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
+                   Continue with Google
+                </>
+             )}
            </button>
         </div>
 

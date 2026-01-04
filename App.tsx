@@ -6,6 +6,7 @@ const Router = HashRouter;
 
 import { AppProvider, useApp } from './context/AppContext';
 import { Layout } from './components/Layout';
+import { MobileNav } from './components/MobileNav'; // Import MobileNav
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
@@ -14,6 +15,14 @@ import { Admin } from './pages/Admin';
 import { Profile } from './pages/Profile';
 import { CourseDetail } from './pages/CourseDetail';
 import { Community } from './pages/Community';
+import { Schedule } from './pages/Schedule'; // Import Schedule
+import { NotFound } from './pages/NotFound'; // Import NotFound
+import { Wallet } from './pages/Wallet';
+import { Flashcards } from './pages/Flashcards';
+import { VideoAI } from './pages/VideoAI';
+import { Certificates } from './pages/Certificates';
+import { Leaderboard } from './pages/Leaderboard';
+import { HelpCenter } from './pages/HelpCenter';
 import { jwtUtils } from './utils/jwt';
 
 // Protected Route Component
@@ -29,61 +38,39 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
-  return <>{children}</>;
+  return (
+    <>
+      {children}
+      <MobileNav /> {/* Show Mobile Nav on protected routes */}
+    </>
+  );
 };
 
 const AppContent: React.FC = () => {
   return (
-    <Layout>
-       <Routes>
-          <Route path="/" element={<Landing />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          
-          <Route 
-            path="/dashboard" 
-            element={
-              <ProtectedRoute>
-                <Dashboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/community" 
-            element={
-              <ProtectedRoute>
-                <Community />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/course/:courseId" 
-            element={
-              <ProtectedRoute>
-                <CourseDetail />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/admin" 
-            element={
-              <ProtectedRoute>
-                <Admin />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute>
-                <Profile />
-              </ProtectedRoute>
-            } 
-          />
-          
-          <Route path="*" element={<Navigate to="/" replace />} />
-       </Routes>
-    </Layout>
+    <Routes>
+       <Route path="/" element={<Landing />} />
+       <Route path="/login" element={<Login />} />
+       <Route path="/signup" element={<Signup />} />
+       
+       {/* Dashboard Layout Routes */}
+       <Route path="/dashboard" element={<Layout><ProtectedRoute><Dashboard /></ProtectedRoute></Layout>} />
+       <Route path="/dashboard/courses" element={<Layout><ProtectedRoute><Dashboard /></ProtectedRoute></Layout>} /> {/* Reusing Dashboard for simplicity or separate page */}
+       
+       <Route path="/course/:courseId" element={<Layout><ProtectedRoute><CourseDetail /></ProtectedRoute></Layout>} />
+       <Route path="/community" element={<Layout><ProtectedRoute><Community /></ProtectedRoute></Layout>} />
+       <Route path="/schedule" element={<Layout><ProtectedRoute><Schedule /></ProtectedRoute></Layout>} />
+       <Route path="/profile" element={<Layout><ProtectedRoute><Profile /></ProtectedRoute></Layout>} />
+       <Route path="/wallet" element={<Layout><ProtectedRoute><Wallet /></ProtectedRoute></Layout>} />
+       <Route path="/flashcards" element={<Layout><ProtectedRoute><Flashcards /></ProtectedRoute></Layout>} />
+       <Route path="/video-ai" element={<Layout><ProtectedRoute><VideoAI /></ProtectedRoute></Layout>} />
+       <Route path="/certificates" element={<Layout><ProtectedRoute><Certificates /></ProtectedRoute></Layout>} />
+       <Route path="/leaderboard" element={<Layout><ProtectedRoute><Leaderboard /></ProtectedRoute></Layout>} />
+       <Route path="/help" element={<Layout><ProtectedRoute><HelpCenter /></ProtectedRoute></Layout>} />
+       <Route path="/admin" element={<Layout><ProtectedRoute><Admin /></ProtectedRoute></Layout>} />
+       
+       <Route path="*" element={<NotFound />} />
+    </Routes>
   );
 };
 
