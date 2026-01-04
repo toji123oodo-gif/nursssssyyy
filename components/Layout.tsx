@@ -6,7 +6,7 @@ import {
   Home, Book, Wallet, User, LogOut, Menu, X, 
   Activity, ChevronRight, Bell, Settings, Cloud,
   Moon, Sun, Users, HelpCircle, ExternalLink, Search, Command,
-  Calendar, Video, Award, Trophy
+  Calendar, Video, Award, Trophy, Shield
 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 import { CommandPalette } from './CommandPalette';
@@ -16,6 +16,9 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const location = useLocation();
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
+
+  // Updated Owner Email
+  const OWNER_EMAIL = "toji123oodo@gmail.com";
 
   // Command Palette Keyboard Shortcut
   useEffect(() => {
@@ -118,6 +121,26 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
            <Link to="/profile" className="flex items-center gap-3 px-3 py-2 rounded-[4px] text-sm font-medium text-muted hover:bg-gray-100 dark:hover:bg-[#2C2C2C] hover:text-main transition-colors">
               <User size={16} /> My Profile
            </Link>
+
+           {/* ADMIN SECTION - Visible Only to Owner */}
+           {user && user.email === OWNER_EMAIL && (
+             <>
+               <div className="my-4 border-t border-[#E5E5E5] dark:border-[#333]"></div>
+               <div className="px-3 py-2 text-[10px] font-bold text-red-500 uppercase tracking-wider">
+                  Administration
+               </div>
+               <Link 
+                  to="/admin" 
+                  className={`flex items-center gap-3 px-3 py-2 rounded-[4px] text-sm font-medium transition-colors ${
+                    isActive('/admin') 
+                    ? 'bg-red-50 dark:bg-red-900/10 text-red-600 dark:text-red-400' 
+                    : 'text-gray-500 hover:bg-gray-100 dark:hover:bg-[#2C2C2C] hover:text-red-600'
+                  }`}
+               >
+                  <Shield size={16} /> Platform Admin
+               </Link>
+             </>
+           )}
         </div>
 
         {/* User Footer */}

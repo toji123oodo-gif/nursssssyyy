@@ -55,6 +55,27 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   );
 };
 
+// Admin Route Component - Only for Owner
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useApp();
+  // Updated Owner Email
+  const OWNER_EMAIL = "toji123oodo@gmail.com"; 
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-[#F9FAFB] dark:bg-[#101010]">
+         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#F38020]"></div>
+      </div>
+    );
+  }
+
+  if (!user || user.email !== OWNER_EMAIL) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
+
 const AppContent: React.FC = () => {
   return (
     <Routes>
@@ -76,7 +97,9 @@ const AppContent: React.FC = () => {
        <Route path="/certificates" element={<Layout><ProtectedRoute><Certificates /></ProtectedRoute></Layout>} />
        <Route path="/leaderboard" element={<Layout><ProtectedRoute><Leaderboard /></ProtectedRoute></Layout>} />
        <Route path="/help" element={<Layout><ProtectedRoute><HelpCenter /></ProtectedRoute></Layout>} />
-       <Route path="/admin" element={<Layout><ProtectedRoute><Admin /></ProtectedRoute></Layout>} />
+       
+       {/* Protected Admin Route */}
+       <Route path="/admin" element={<Layout><AdminRoute><Admin /></AdminRoute></Layout>} />
        
        <Route path="*" element={<NotFound />} />
     </Routes>
