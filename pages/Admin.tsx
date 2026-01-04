@@ -7,10 +7,11 @@ import {
   Users, Book, Ticket, Activity, Search, RefreshCw, 
   Trash2, Edit2, Plus, Check, X, Shield, Filter
 } from 'lucide-react';
+import { CoursesTab } from '../components/admin/CoursesTab';
 
 export const Admin: React.FC = () => {
   const { courses } = useApp();
-  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'codes'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'users' | 'codes' | 'courses'>('overview');
   const [users, setUsers] = useState<User[]>([]);
   const [codes, setCodes] = useState<ActivationCode[]>([]);
   
@@ -54,12 +55,12 @@ export const Admin: React.FC = () => {
       </div>
 
       {/* Top Navigation Tabs */}
-      <div className="flex border-b border-[#E5E5E5] dark:border-[#333]">
-         {['overview', 'users', 'codes'].map(tab => (
+      <div className="flex border-b border-[#E5E5E5] dark:border-[#333] overflow-x-auto">
+         {['overview', 'users', 'codes', 'courses'].map(tab => (
            <button
              key={tab}
              onClick={() => setActiveTab(tab as any)}
-             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors capitalize ${
+             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors capitalize whitespace-nowrap ${
                activeTab === tab 
                ? 'border-[#F38020] text-[#F38020]' 
                : 'border-transparent text-muted hover:text-main'
@@ -198,6 +199,11 @@ export const Admin: React.FC = () => {
               </div>
            </div>
         </div>
+      )}
+
+      {/* Courses Content */}
+      {activeTab === 'courses' && (
+        <CoursesTab />
       )}
     </div>
   );
