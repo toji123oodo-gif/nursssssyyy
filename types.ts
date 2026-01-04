@@ -13,7 +13,6 @@ export interface Quiz {
   id: string;
   title: string;
   questions: Question[];
-  // New Fields
   timeLimit?: number; // in minutes
   passingScore?: number; // percentage
 }
@@ -25,14 +24,13 @@ export interface ContentItem {
   url: string;
   duration?: string;
   fileSize?: string;
-  // For articles
   textContent?: string;
 }
 
 export interface Lesson {
   id: string;
   title: string;
-  description?: string; // New
+  description?: string;
   duration?: string;
   contents: ContentItem[];
   quiz?: Quiz;
@@ -90,4 +88,34 @@ export interface Exam {
   date: string;
   time: string;
   location: string;
+}
+
+// New Community Types
+export interface CommunityGroup {
+  id: string;
+  name: string;
+  description: string;
+  memberCount: number;
+  icon?: string; // Icon name
+}
+
+export interface UploadRequest {
+  id: string;
+  userId: string;
+  userName: string;
+  type: 'pdf' | 'video' | 'summary';
+  title: string;
+  description: string;
+  fileUrl?: string; // Optional for now (mock)
+  status: 'pending' | 'approved' | 'rejected';
+  timestamp: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  userId: string;
+  userName: string;
+  text: string;
+  timestamp: string;
+  isAdmin?: boolean;
 }
