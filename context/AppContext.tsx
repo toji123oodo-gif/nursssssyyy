@@ -103,8 +103,26 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       }, { merge: true }).catch(err => console.error("Background sync failed", err));
   };
 
-  // Optimized Auth Listener for Speed
+  // Auth Listener & Auto-Login Logic
   useEffect(() => {
+    // Check if we have a persisted token first to show UI immediately
+    const persistedToken = jwtUtils.getToken();
+    if (persistedToken && !jwtUtils.isExpired(persistedToken)) {
+       const decoded = jwtUtils.decode(persistedToken);
+       if (decoded) {
+          // Temporarily set user from token while firebase loads
+          setUser({
+             id: decoded.sub,
+             name: decoded.name,
+             email: decoded.email,
+             phone: '',
+             role: decoded.role as any,
+             subscriptionTier: 'free',
+             xp: 0
+          });
+       }
+    }
+
     if (!auth) {
       setIsLoading(false);
       return;
@@ -112,7 +130,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
-        // 1. Create Optimistic User IMMEDIATELY
+        // Standard Firebase Login
         const optimisticUser: User = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || 'Student',
@@ -130,13 +148,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const newToken = jwtUtils.sign({ 
            sub: optimisticUser.id, 
            name: optimisticUser.name, 
-           email: optimisticUser.email 
+           email: optimisticUser.email,
+           role: 'student'
         });
         jwtUtils.saveToken(newToken);
         setToken(newToken);
         setIsLoading(false);
 
-        // 2. Fetch detailed profile in background
+        // Fetch detailed profile
         db.collection("users").doc(firebaseUser.uid).get().then((docSnap: any) => {
           if (docSnap.exists) {
             setUser({ id: firebaseUser.uid, ...docSnap.data() } as User);
@@ -146,22 +165,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }).catch(console.error);
 
       } else {
-        // AUTO-LOGIN BYPASS for Mstfymdht542@gmail.com
-        // This effectively removes the login page by always ensuring a user is logged in.
+        // --- AUTO-LOGIN BYPASS FOR SPECIFIC OWNER ---
+        // This ensures Mstfymdht542@gmail.com never sees a login screen
+        console.log("No Firebase session found. Activating Auto-Login Bypass...");
+        
         const bypassUser: User = {
-            id: 'bypass-admin-id-001',
+            id: 'owner-auto-login-001',
             name: 'Mostafa (Owner)',
             email: 'Mstfymdht542@gmail.com',
             phone: '01000000000',
-            role: 'admin', // Owner privileges
+            role: 'admin', // Grants access to Admin Panel
             subscriptionTier: 'pro',
-            xp: 15000,
-            level: 50,
+            xp: 99999,
+            level: 100,
             streak: 365,
             joinedAt: new Date().toISOString(),
             university: 'Nursy Academy',
             faculty: 'Administration',
-            academicYear: 'Staff'
+            academicYear: 'Staff',
+            walletBalance: 5000
         };
         
         setUser(bypassUser);
@@ -169,8 +191,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         const bypassToken = jwtUtils.sign({ 
            sub: bypassUser.id, 
            name: bypassUser.name, 
-           email: bypassUser.email 
+           email: bypassUser.email,
+           role: 'admin'
         });
+        
         jwtUtils.saveToken(bypassToken);
         setToken(bypassToken);
         setIsLoading(false);
@@ -194,11 +218,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const loginWithGoogle = async () => { await auth.signInWithPopup(googleProvider); };
   
-  // Logout now just resets to the default user to maintain "no login page" feel, 
-  // or actually signs out firebase (which triggers the listener to re-login the bypass user)
   const logout = async () => { 
       await auth.signOut(); 
-      // The onAuthStateChanged listener will immediately re-login the bypass user.
+      jwtUtils.removeToken();
+      // Note: The listener will re-login the bypass user immediately unless logic is added to prevent it.
+      // Ideally for a "kiosk" mode, logout resets the session.
+      window.location.reload(); 
   };
   
   const updateUserData = async (data: Partial<User>) => {

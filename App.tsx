@@ -6,7 +6,7 @@ const Router = HashRouter;
 
 import { AppProvider, useApp } from './context/AppContext';
 import { Layout } from './components/Layout';
-import { MobileNav } from './components/MobileNav'; // Import MobileNav
+import { MobileNav } from './components/MobileNav';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
 import { Login } from './pages/Login';
@@ -15,15 +15,31 @@ import { Admin } from './pages/Admin';
 import { Profile } from './pages/Profile';
 import { CourseDetail } from './pages/CourseDetail';
 import { Community } from './pages/Community';
-import { Schedule } from './pages/Schedule'; // Import Schedule
-import { NotFound } from './pages/NotFound'; // Import NotFound
+import { Schedule } from './pages/Schedule';
+import { NotFound } from './pages/NotFound';
 import { Wallet } from './pages/Wallet';
 import { Flashcards } from './pages/Flashcards';
-import { UploadResource } from './pages/UploadResource'; // New Import
+import { UploadResource } from './pages/UploadResource';
 import { Certificates } from './pages/Certificates';
 import { Leaderboard } from './pages/Leaderboard';
 import { HelpCenter } from './pages/HelpCenter';
 import { jwtUtils } from './utils/jwt';
+
+// Public Route: Redirects to dashboard if user is ALREADY logged in
+// This ensures the login page disappears for registered/active users
+const PublicRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user, isLoading } = useApp();
+  
+  if (isLoading) {
+     return null; // Or a minimal loader
+  }
+
+  if (user) {
+    return <Navigate to="/dashboard" replace />;
+  }
+
+  return <>{children}</>;
+};
 
 // Protected Route Component
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -55,10 +71,9 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   );
 };
 
-// Admin Route Component - Accessible by Owners and Admins
+// Admin Route Component
 const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user, isLoading } = useApp();
-  // Updated Owner Emails
   const OWNERS = ["toji123oodo@gmail.com", "Mstfymdht542@gmail.com"];
 
   if (isLoading) {
@@ -69,7 +84,6 @@ const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     );
   }
 
-  // Allow if user is an Owner OR has the 'admin' role
   if (!user || (!OWNERS.includes(user.email) && user.role !== 'admin')) {
     return <Navigate to="/dashboard" replace />;
   }
@@ -81,8 +95,11 @@ const AppContent: React.FC = () => {
   return (
     <Routes>
        <Route path="/" element={<Landing />} />
-       <Route path="/login" element={<Login />} />
-       <Route path="/signup" element={<Signup />} />
+       
+       {/* Public Routes (Login/Signup) are now guarded by PublicRoute */}
+       {/* This means if a user is logged in (including auto-login), they cannot access these pages */}
+       <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
+       <Route path="/signup" element={<PublicRoute><Signup /></PublicRoute>} />
        
        {/* Dashboard Layout Routes */}
        <Route path="/dashboard" element={<Layout><ProtectedRoute><Dashboard /></ProtectedRoute></Layout>} />
