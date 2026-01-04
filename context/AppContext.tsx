@@ -1,4 +1,3 @@
-
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Course } from '../types';
 import { courses as defaultCourses } from '../data/courses';
@@ -41,7 +40,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
-    return (localStorage.getItem('nursy_theme') as 'light' | 'dark') || 'dark'; // Default to Dark
+    return (localStorage.getItem('nursy_theme') as 'light' | 'dark') || 'dark';
   });
 
   // Language Effect
@@ -63,11 +62,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [theme]);
 
   const toggleLanguage = () => {
-    setLanguage(prev => prev === 'ar' ? 'en' : 'ar');
+    setLanguage(prev => (prev === 'ar' ? 'en' : 'ar'));
   };
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'light' ? 'dark' : 'light');
+    setTheme(prev => (prev === 'light' ? 'dark' : 'light'));
   };
 
   const getDeviceInfo = () => {
@@ -84,12 +83,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (!db) return;
     const unsubscribe = db.collection("courses").onSnapshot((snapshot) => {
       if (snapshot.empty) {
-        const batch = db.batch();
-        defaultCourses.forEach((c) => {
-          const ref = db.collection("courses").doc(c.id);
-          batch.set(ref, c);
-        });
-        batch.commit().catch(e => console.error("Courses seed failed:", e));
+        setCourses(defaultCourses);
       } else {
         const cloudCourses = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Course));
         setCourses(cloudCourses);
@@ -100,19 +94,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const syncUserToCloud = async (userData: User) => {
     if (!db || !userData.id) return;
-    try {
-      // Fire and forget - don't await to prevent blocking UI
-      db.collection("users").doc(userData.id).set({
+    // Fire and forget - completely backgrounded
+    db.collection("users").doc(userData.id).set({
           ...userData,
           lastSeen: new Date().toISOString(),
           lastDevice: getDeviceInfo()
       }, { merge: true }).catch(err => console.error("Background sync failed", err));
-    } catch (e) {
-      console.error("Sync Error:", e);
-    }
   };
 
-  // Critical Fix: Consolidated Auth State Management with Timeout
+  // Optimized Auth Listener for Speed
   useEffect(() => {
     if (!auth) {
       setIsLoading(false);
@@ -120,73 +110,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
 
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
-      try {
-        if (firebaseUser) {
-          // Fallback user object (Optimistic UI)
-          const fallbackUser: User = {
-            id: firebaseUser.uid,
-            name: firebaseUser.displayName || 'Student',
-            email: firebaseUser.email || '',
-            phone: '',
-            xp: 0,
-            level: 1,
-            streak: 0,
-            joinedAt: new Date().toISOString(),
-            subscriptionTier: 'free'
-          };
+      if (firebaseUser) {
+        // 1. Create Optimistic User IMMEDIATELY
+        // We don't wait for Firestore. This makes login feel instant.
+        const optimisticUser: User = {
+          id: firebaseUser.uid,
+          name: firebaseUser.displayName || 'Student',
+          email: firebaseUser.email || '',
+          phone: '',
+          xp: 0,
+          level: 1,
+          streak: 0,
+          joinedAt: new Date().toISOString(),
+          subscriptionTier: 'free'
+        };
 
-          // 1. Fetch User Data with Timeout Strategy
-          // Prevents hanging if Firestore is unreachable/slow
-          const docRef = db.collection("users").doc(firebaseUser.uid);
-          
-          // Timeout promise: rejects after 4 seconds
-          const timeoutPromise = new Promise((_, reject) => 
-            setTimeout(() => reject(new Error("Request timed out")), 4000)
-          );
+        // Set state immediately so UI unblocks
+        setUser(optimisticUser);
+        
+        const newToken = jwtUtils.sign({ 
+           sub: optimisticUser.id, 
+           name: optimisticUser.name, 
+           email: optimisticUser.email 
+        });
+        jwtUtils.saveToken(newToken);
+        setToken(newToken);
+        setIsLoading(false); // Stop loading spinner
 
-          let finalUser = fallbackUser;
-
-          try {
-            // Race the DB fetch against the timeout
-            const docSnap: any = await Promise.race([
-              docRef.get(),
-              timeoutPromise
-            ]);
-          
-            if (docSnap.exists) {
-               finalUser = { id: firebaseUser.uid, ...docSnap.data() } as User;
-            } else {
-               // New user, save to DB in background
-               syncUserToCloud(finalUser);
-            }
-          } catch (err) {
-            console.warn("Firestore fetch failed or timed out, using fallback user data:", err);
-            // On error/timeout, we proceed with fallbackUser so user can still login
-            syncUserToCloud(fallbackUser);
+        // 2. Fetch detailed profile in background
+        db.collection("users").doc(firebaseUser.uid).get().then((docSnap: any) => {
+          if (docSnap.exists) {
+            // Update with real data when available, without blocking UI
+            setUser({ id: firebaseUser.uid, ...docSnap.data() } as User);
+          } else {
+            // New user, sync optimistic data
+            syncUserToCloud(optimisticUser);
           }
-          
-          setUser(finalUser);
-          
-          // Generate Token
-          const newToken = jwtUtils.sign({ 
-             sub: finalUser.id, 
-             name: finalUser.name, 
-             email: finalUser.email 
-          });
-          jwtUtils.saveToken(newToken);
-          setToken(newToken);
-          
-        } else {
-          // Logout
-          setUser(null);
-          setToken(null);
-          jwtUtils.removeToken();
-        }
-      } catch (error) {
-        console.error("Auth State Change Critical Error:", error);
+        }).catch(console.error);
+
+      } else {
+        // Logout
         setUser(null);
         setToken(null);
-      } finally {
+        jwtUtils.removeToken();
         setIsLoading(false);
       }
     });
@@ -194,20 +160,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => unsubscribe();
   }, []);
 
-  const login = async (email: string, pass: string) => { await auth.signInWithEmailAndPassword(email, pass); };
+  const login = async (email: string, pass: string) => { 
+    await auth.signInWithEmailAndPassword(email, pass); 
+  };
   
   const signup = async (email: string, pass: string, name: string, phone: string) => {
     const userCredential = await auth.createUserWithEmailAndPassword(email, pass);
     const firebaseUser = userCredential.user;
     if (firebaseUser) {
       await firebaseUser.updateProfile({ displayName: name });
-      const newUser: User = { 
-        id: firebaseUser.uid, name, email, phone, xp: 0, level: 1, streak: 0, joinedAt: new Date().toISOString(),
-        subscriptionTier: 'free'
-      };
-      // Optimistic update
-      setUser(newUser);
-      syncUserToCloud(newUser);
+      // We don't need to manually set state here, onAuthStateChanged will handle it instantly
     }
   };
 
@@ -217,7 +179,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const updateUserData = async (data: Partial<User>) => {
     if (!user) return;
     const updatedUser = { ...user, ...data };
-    setUser(updatedUser);
+    setUser(updatedUser); // Optimistic update
     syncUserToCloud(updatedUser);
   };
 

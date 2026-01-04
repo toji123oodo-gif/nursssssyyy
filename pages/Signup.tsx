@@ -24,10 +24,12 @@ export const Signup: React.FC = () => {
 
     try {
       await signup(formData.email, formData.password, formData.name, formData.phone);
+      // Immediate navigation
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      if (err.code === 'auth/email-already-in-use') setError('This email is already registered.');
-      else if (err.code === 'auth/weak-password') setError('Password should be at least 6 characters.');
-      else setError('Failed to create account. Please try again.');
+      if (err.code === 'auth/email-already-in-use') setError('البريد الإلكتروني مسجل بالفعل.');
+      else if (err.code === 'auth/weak-password') setError('كلمة المرور يجب أن تكون 6 أحرف على الأقل.');
+      else setError('فشل إنشاء الحساب. يرجى المحاولة مرة أخرى.');
       setIsLoading(false);
     }
   };
@@ -37,9 +39,9 @@ export const Signup: React.FC = () => {
       {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 order-2 lg:order-1">
          <div className="w-full max-w-sm space-y-8">
-            <div className="text-center lg:text-left">
-               <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Create an account</h2>
-               <p className="text-sm text-gray-500 mt-2">Start your journey with NursyPlatform today.</p>
+            <div className="text-center lg:text-right">
+               <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">إنشاء حساب جديد</h2>
+               <p className="text-sm text-gray-500 mt-2">ابدأ رحلتك التعليمية مع NursyPlatform اليوم.</p>
             </div>
 
             {error && (
@@ -51,11 +53,11 @@ export const Signup: React.FC = () => {
 
             <form onSubmit={handleSignup} className="space-y-4">
                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Full Name</label>
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">الاسم بالكامل</label>
                   <input 
                      type="text" 
                      className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
-                     placeholder="John Doe"
+                     placeholder="محمد أحمد"
                      value={formData.name}
                      onChange={e => setFormData({...formData, name: e.target.value})}
                      required
@@ -64,18 +66,18 @@ export const Signup: React.FC = () => {
 
                <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
-                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Email</label>
+                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">البريد الإلكتروني</label>
                      <input 
                         type="email" 
                         className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
-                        placeholder="john@example.com"
+                        placeholder="example@edu.eg"
                         value={formData.email}
                         onChange={e => setFormData({...formData, email: e.target.value})}
                         required
                      />
                   </div>
                   <div className="space-y-1.5">
-                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Phone</label>
+                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">رقم الهاتف</label>
                      <input 
                         type="tel" 
                         className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
@@ -88,11 +90,11 @@ export const Signup: React.FC = () => {
                </div>
 
                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Password</label>
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">كلمة المرور</label>
                   <input 
                      type="password" 
                      className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
-                     placeholder="Min 8 characters"
+                     placeholder="على الأقل 8 أحرف"
                      value={formData.password}
                      onChange={e => setFormData({...formData, password: e.target.value})}
                      required
@@ -102,7 +104,7 @@ export const Signup: React.FC = () => {
                <div className="bg-gray-50 dark:bg-[#151515] p-3 rounded-lg flex gap-3 items-start">
                   <div className="mt-0.5 text-green-500"><ShieldCheck size={16} /></div>
                   <p className="text-xs text-gray-500 leading-tight">
-                     By creating an account, you agree to our Terms of Service and Privacy Policy. Your data is secure.
+                     بإنشاء حساب، أنت توافق على شروط الخدمة وسياسة الخصوصية. بياناتك مشفرة بالكامل.
                   </p>
                </div>
 
@@ -111,13 +113,13 @@ export const Signup: React.FC = () => {
                   disabled={isLoading}
                   className="w-full bg-[#1a1a1a] dark:bg-white text-white dark:text-black hover:opacity-90 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2"
                >
-                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'Create Account'} 
-                  {!isLoading && <ArrowRight size={16} />}
+                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'إنشاء الحساب'} 
+                  {!isLoading && <ArrowRight size={16} className="rotate-180" />}
                </button>
             </form>
 
             <p className="text-center text-sm text-gray-500">
-               Already have an account? <Link to="/login" className="text-[#F38020] font-medium hover:underline">Log in</Link>
+               لديك حساب بالفعل؟ <Link to="/login" className="text-[#F38020] font-medium hover:underline">تسجيل الدخول</Link>
             </p>
          </div>
       </div>
@@ -136,17 +138,17 @@ export const Signup: React.FC = () => {
 
          <div className="relative z-10 max-w-lg ml-auto text-right">
             <h1 className="text-4xl font-bold tracking-tight mb-6 leading-tight">
-               Start your professional <br/> nursing career here.
+               ابدأ مسيرتك المهنية <br/> في التمريض من هنا.
             </h1>
-            <ul className="space-y-4 text-white/90 text-lg mb-8 inline-block text-right">
+            <ul className="space-y-4 text-white/90 text-lg mb-8 inline-block text-right w-full">
                <li className="flex items-center justify-end gap-3">
-                  <span>Accredited Curriculum</span> <Check size={20} className="text-white" />
+                  <span>مناهج معتمدة رسمياً</span> <Check size={20} className="text-white" />
                </li>
                <li className="flex items-center justify-end gap-3">
-                  <span>AI Video Analysis</span> <Check size={20} className="text-white" />
+                  <span>تحليل فيديو بالذكاء الاصطناعي</span> <Check size={20} className="text-white" />
                </li>
                <li className="flex items-center justify-end gap-3">
-                  <span>Verified Certificates</span> <Check size={20} className="text-white" />
+                  <span>شهادات موثقة</span> <Check size={20} className="text-white" />
                </li>
             </ul>
          </div>

@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate, Link } = ReactRouterDOM as any;
-import { Cloud, Loader2, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
+import { Cloud, Loader2, AlertCircle, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const Login: React.FC = () => {
@@ -14,6 +14,7 @@ export const Login: React.FC = () => {
   const { user, login, loginWithGoogle } = useApp();
   const navigate = useNavigate();
 
+  // Redirect if already logged in
   useEffect(() => {
     if (user) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
@@ -24,11 +25,13 @@ export const Login: React.FC = () => {
     setError('');
     try {
       await login(email, password);
+      // Force immediate navigation to avoid waiting for state updates
+      navigate('/dashboard', { replace: true });
     } catch (err: any) {
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
         setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
       } else {
-        setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
+        setError('حدث خطأ أثناء تسجيل الدخول. تأكد من الاتصال بالإنترنت.');
       }
       setIsLoading(false);
     }
@@ -38,6 +41,7 @@ export const Login: React.FC = () => {
      try {
         setIsLoading(true);
         await loginWithGoogle();
+        navigate('/dashboard', { replace: true });
      } catch (e: any) {
         if (e.code === 'auth/unauthorized-domain') {
            setError(`الدومين غير مصرح به: ${window.location.hostname}`);
@@ -52,8 +56,8 @@ export const Login: React.FC = () => {
     <div className="min-h-screen w-full flex bg-white dark:bg-[#0a0a0a]">
       {/* Left Side - Visual & Branding */}
       <div className="hidden lg:flex lg:w-1/2 bg-[#101010] relative flex-col justify-between p-12 text-white overflow-hidden">
-         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160550-2187d800273a?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
-         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160550-2187d800273a?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-30"></div>
+         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
          
          <div className="relative z-10">
             <div className="flex items-center gap-2 text-[#F38020] mb-2">
@@ -63,23 +67,23 @@ export const Login: React.FC = () => {
          </div>
 
          <div className="relative z-10 max-w-lg">
-            <h1 className="text-4xl font-bold tracking-tight mb-4 leading-tight">
-               Master Clinical Skills <br/> with AI Precision.
+            <h1 className="text-4xl font-bold tracking-tight mb-4 leading-tight font-sans">
+               طور مهاراتك الطبية <br/> بأحدث تقنيات الذكاء الاصطناعي.
             </h1>
-            <p className="text-gray-400 text-lg leading-relaxed mb-8">
-               Join thousands of Egyptian nursing students using Nursy to prepare for exams and clinical practice.
+            <p className="text-gray-400 text-lg leading-relaxed mb-8 font-sans">
+               انضم لآلاف الطلاب في مصر واستمتع بتجربة تعليمية تفاعلية مصممة خصيصاً لكليات التمريض.
             </p>
             <div className="flex items-center gap-4">
                <div className="flex -space-x-3">
                   {[1,2,3,4].map(i => (
                      <div key={i} className="w-10 h-10 rounded-full border-2 border-black bg-gray-800 flex items-center justify-center text-xs font-bold">
-                        S{i}
+                        {String.fromCharCode(64+i)}
                      </div>
                   ))}
                </div>
                <div className="text-sm">
-                  <span className="block font-bold">4.9/5 Rating</span>
-                  <span className="text-gray-500">based on 1,200+ reviews</span>
+                  <span className="block font-bold">4.9/5 تقييم</span>
+                  <span className="text-gray-500">من +1,200 طالب</span>
                </div>
             </div>
          </div>
@@ -88,13 +92,13 @@ export const Login: React.FC = () => {
       {/* Right Side - Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
          <div className="w-full max-w-sm space-y-8">
-            <div className="text-center lg:text-left">
-               <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Welcome back</h2>
-               <p className="text-sm text-gray-500 mt-2">Enter your credentials to access your account.</p>
+            <div className="text-center lg:text-right">
+               <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">مرحباً بعودتك</h2>
+               <p className="text-sm text-gray-500 mt-2">أدخل بياناتك للدخول إلى حسابك.</p>
             </div>
 
             {error && (
-               <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 rounded-md text-sm flex items-start gap-2">
+               <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 rounded-md text-sm flex items-start gap-2 animate-in fade-in slide-in-from-top-2">
                   <AlertCircle size={16} className="mt-0.5 shrink-0"/>
                   <span>{error}</span>
                </div>
@@ -102,7 +106,7 @@ export const Login: React.FC = () => {
 
             <form onSubmit={handleLogin} className="space-y-5">
                <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Email</label>
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">البريد الإلكتروني</label>
                   <input 
                      type="email" 
                      className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
@@ -114,8 +118,8 @@ export const Login: React.FC = () => {
                </div>
                <div className="space-y-1.5">
                   <div className="flex justify-between items-center">
-                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Password</label>
-                     <a href="#" className="text-xs text-[#F38020] hover:underline">Forgot password?</a>
+                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">كلمة المرور</label>
+                     <a href="#" className="text-xs text-[#F38020] hover:underline">نسيت كلمة المرور؟</a>
                   </div>
                   <input 
                      type="password" 
@@ -132,14 +136,14 @@ export const Login: React.FC = () => {
                   disabled={isLoading}
                   className="w-full bg-[#F38020] hover:bg-[#d66e16] text-white py-2.5 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
                >
-                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'Sign In'} 
-                  {!isLoading && <ArrowRight size={16} />}
+                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'تسجيل الدخول'} 
+                  {!isLoading && <ArrowRight size={16} className="rotate-180" />}
                </button>
             </form>
 
             <div className="relative">
                <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200 dark:border-[#333]"></div></div>
-               <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-[#0a0a0a] px-2 text-gray-500">Or continue with</span></div>
+               <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-[#0a0a0a] px-2 text-gray-500">أو</span></div>
             </div>
 
             <button 
@@ -148,11 +152,11 @@ export const Login: React.FC = () => {
                className="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#333] hover:bg-gray-50 dark:hover:bg-[#202020] text-gray-700 dark:text-gray-200 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
             >
                <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
-               Google
+               Google Account
             </button>
 
             <p className="text-center text-sm text-gray-500">
-               Don't have an account? <Link to="/signup" className="text-[#F38020] font-medium hover:underline">Sign up for free</Link>
+               ليس لديك حساب؟ <Link to="/signup" className="text-[#F38020] font-medium hover:underline">إنشاء حساب جديد</Link>
             </p>
          </div>
       </div>
