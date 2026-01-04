@@ -12,7 +12,9 @@ interface AppContextType {
   isLoading: boolean;
   courses: Course[];
   language: 'ar' | 'en';
+  theme: 'light' | 'dark';
   toggleLanguage: () => void;
+  toggleTheme: () => void;
   login: (email: string, pass: string) => Promise<void>;
   signup: (email: string, pass: string, name: string, phone: string) => Promise<void>;
   loginWithGoogle: () => Promise<void>;
@@ -33,18 +35,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [isLoading, setIsLoading] = useState(true);
   const [courses, setCourses] = useState<Course[]>([]);
   const [isExamHubOpen, setExamHubOpen] = useState(false);
+  
   const [language, setLanguage] = useState<'ar' | 'en'>(() => {
     return (localStorage.getItem('nursy_lang') as 'ar' | 'en') || 'ar';
   });
 
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    return (localStorage.getItem('nursy_theme') as 'light' | 'dark') || 'dark'; // Default to Dark
+  });
+
+  // Language Effect
   useEffect(() => {
     document.documentElement.dir = language === 'ar' ? 'rtl' : 'ltr';
     document.documentElement.lang = language;
     localStorage.setItem('nursy_lang', language);
   }, [language]);
 
+  // Theme Effect
+  useEffect(() => {
+    const root = window.document.documentElement;
+    if (theme === 'dark') {
+      root.classList.add('dark');
+    } else {
+      root.classList.remove('dark');
+    }
+    localStorage.setItem('nursy_theme', theme);
+  }, [theme]);
+
   const toggleLanguage = () => {
     setLanguage(prev => prev === 'ar' ? 'en' : 'ar');
+  };
+
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
   const getDeviceInfo = () => {
@@ -117,7 +140,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               level: 1,
               streak: 0,
               joinedAt: new Date().toISOString(),
-              // Added subscriptionTier for new users
               subscriptionTier: 'free'
             };
           }
@@ -143,7 +165,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       await firebaseUser.updateProfile({ displayName: name });
       const newUser: User = { 
         id: firebaseUser.uid, name, email, phone, xp: 0, level: 1, streak: 0, joinedAt: new Date().toISOString(),
-        // Added subscriptionTier for new users
         subscriptionTier: 'free'
       };
       setUser(newUser);
@@ -166,7 +187,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   return (
     <AppContext.Provider value={{ 
-        user, token, isLoading, courses, language, toggleLanguage,
+        user, token, isLoading, courses, language, theme, toggleLanguage, toggleTheme,
         login, signup, loginWithGoogle, logout, updateUserData,
         addCourse, updateCourse, deleteCourse, isExamHubOpen, setExamHubOpen
     }}>

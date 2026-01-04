@@ -4,32 +4,42 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nursy - نيرسي للتعليم</title>
+    <title>Nursy - Educational Platform</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&family=Outfit:wght@400;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Cairo:wght@400;500;600;700&display=swap" rel="stylesheet">
     <script>
       tailwind.config = {
+        darkMode: 'class', // Enable manual dark mode toggling
         theme: {
           extend: {
             colors: {
               brand: {
-                main: '#020617', // Navy Deep
-                card: '#0f172a', // Slate Deep
-                hover: '#1e293b',
-                gold: '#fbbf24',
-                goldHover: '#d97706',
-                accent: '#38bdf8', // Light Blue Accent
-                text: '#f8fafc',
-                muted: '#94a3b8',
+                orange: '#F38020', // Cloudflare Orange
+                orangeHover: '#c7620e',
+                black: '#1f2937',
+                gray: '#666666',
+                bg: '#FFFFFF',
+                surface: '#F9FAFB',
+                border: '#E5E5E5',
+                // Dark Mode Specifics
+                darkBg: '#161616',
+                darkCard: '#202020',
+                darkBorder: 'rgba(255, 255, 255, 0.1)',
+                darkTextMuted: '#A0A0A0'
               }
             },
             fontFamily: {
-              sans: ['Cairo', 'sans-serif'],
-              english: ['Outfit', 'sans-serif'],
+              sans: ['Inter', 'Cairo', 'sans-serif'],
             },
             boxShadow: {
-              'premium': '0 0 50px -12px rgba(251, 191, 36, 0.25)',
-              'inner-glow': 'inset 0 0 20px rgba(251, 191, 36, 0.05)',
+              'sm': '0 1px 2px 0 rgba(0, 0, 0, 0.05)',
+              'card': '0 2px 5px rgba(0,0,0,0.03)',
+              'glow': '0 0 20px rgba(243, 128, 32, 0.15)',
+            },
+            borderRadius: {
+              'DEFAULT': '4px',
+              'md': '6px',
+              'lg': '8px',
             }
           }
         }
@@ -53,7 +63,7 @@
 }
 </script>
 </head>
-  <body>
+  <body class="bg-[#F9FAFB] dark:bg-[#161616] text-[#333333] dark:text-white antialiased selection:bg-brand-orange selection:text-white transition-colors duration-300">
     <div id="root"></div>
     <script type="module" src="/index.tsx"></script>
   </body>

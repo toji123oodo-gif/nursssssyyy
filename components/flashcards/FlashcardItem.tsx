@@ -21,31 +21,31 @@ export const FlashcardItem: React.FC<Props> = ({ card, onRate }) => {
         className={`relative w-full h-full transition-transform duration-700 transform-style-3d cursor-pointer ${isFlipped ? 'rotate-y-180' : ''}`}
       >
         {/* Front Face */}
-        <div className="absolute inset-0 backface-hidden bg-brand-card border-2 border-white/5 rounded-[3rem] p-12 flex flex-col items-center justify-center text-center shadow-2xl group-hover:border-brand-gold/30 transition-all">
-          <div className="absolute top-8 right-8 text-brand-gold/20"><HelpCircle size={40} /></div>
-          <span className="text-brand-gold text-[10px] font-black uppercase tracking-[0.4em] mb-6">المصطلح الطبي</span>
-          <h3 className="text-4xl md:text-5xl font-black text-white leading-tight tracking-tight">{card.front}</h3>
-          <p className="mt-10 text-brand-muted text-xs font-bold animate-pulse">إضغط لعرض الترجمة والشرح</p>
+        <div className="absolute inset-0 backface-hidden bg-white border border-gray-200 rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg hover:shadow-xl transition-all">
+          <div className="absolute top-4 right-4 text-gray-200"><HelpCircle size={32} /></div>
+          <span className="text-brand-blue text-xs font-bold uppercase tracking-widest mb-4">المصطلح الطبي</span>
+          <h3 className="text-3xl font-black text-gray-900 mb-2">{card.front}</h3>
+          <p className="mt-8 text-gray-400 text-xs animate-pulse">اضغط لعرض الإجابة</p>
         </div>
 
         {/* Back Face */}
-        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-brand-gold rounded-[3rem] p-12 flex flex-col items-center justify-center text-center shadow-glow">
-          <div className="absolute top-8 right-8 text-brand-main/20"><RotateCcw size={40} /></div>
-          <span className="text-brand-main/60 text-[10px] font-black uppercase tracking-[0.4em] mb-6">الشرح والترجمة</span>
-          <h3 className="text-3xl md:text-4xl font-black text-brand-main leading-tight mb-8">{card.back}</h3>
+        <div className="absolute inset-0 backface-hidden rotate-y-180 bg-brand-blue text-white rounded-2xl p-8 flex flex-col items-center justify-center text-center shadow-lg">
+          <div className="absolute top-4 right-4 text-white/20"><RotateCcw size={32} /></div>
+          <span className="text-white/60 text-xs font-bold uppercase tracking-widest mb-4">التعريف</span>
+          <h3 className="text-2xl font-bold mb-8 leading-relaxed">{card.back}</h3>
           
-          <div className="flex gap-4 w-full" onClick={(e) => e.stopPropagation()}>
+          <div className="flex gap-3 w-full" onClick={(e) => e.stopPropagation()}>
             <button 
               onClick={() => onRate('hard')}
-              className="flex-1 bg-brand-main/10 border border-brand-main/20 text-brand-main font-black py-4 rounded-2xl hover:bg-brand-main/20 transition-all text-xs"
+              className="flex-1 bg-white/10 hover:bg-white/20 border border-white/20 text-white font-bold py-3 rounded-lg transition-all text-xs"
             >
-              لسه محتاج مراجعة
+              محتاج مراجعة
             </button>
             <button 
               onClick={() => onRate('easy')}
-              className="flex-1 bg-brand-main text-brand-gold font-black py-4 rounded-2xl shadow-xl hover:scale-105 transition-all text-xs flex items-center justify-center gap-2"
+              className="flex-1 bg-white text-brand-blue font-bold py-3 rounded-lg shadow-md hover:bg-gray-100 transition-all text-xs flex items-center justify-center gap-2"
             >
-              <CheckCircle2 size={16} /> عرفتها خلاص
+              <CheckCircle2 size={16} /> عرفتها
             </button>
           </div>
         </div>

@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { FileText, FileDown, Brain } from 'lucide-react';
+import { FileText, Download, Brain } from 'lucide-react';
 import { ContentItem } from '../../types';
 
 interface Props {
@@ -10,43 +10,45 @@ interface Props {
 
 export const StudyResources: React.FC<Props> = ({ pdfFiles, onQuizClick }) => {
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ns-animate--fade-in-up" style={{ animationDelay: '0.2s' }}>
-      <div className="bg-brand-card p-10 md:p-12 rounded-[3.5rem] border border-white/5 shadow-xl relative overflow-hidden group">
-        <div className="absolute -top-10 -right-10 w-32 h-32 bg-brand-gold/5 blur-3xl rounded-full group-hover:bg-brand-gold/10 transition-colors"></div>
-        <h4 className="text-white font-black text-2xl mb-8 flex items-center gap-4">
-          <FileText className="text-brand-gold" /> الملحقات (PDF)
+    <div className="space-y-6">
+      <div className="bg-white rounded-lg border border-gray-200 p-6">
+        <h4 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+          <FileText size={18} className="text-gray-400" /> الملفات المرفقة
         </h4>
-        <div className="space-y-4">
+        <div className="space-y-2">
           {pdfFiles.map(f => (
-            <div key={f.id} className="bg-brand-main p-6 rounded-3xl flex items-center justify-between border border-white/5 hover:border-brand-gold/30 transition-all cursor-pointer shadow-inner">
-              <div className="flex items-center gap-4">
-                <div className="w-10 h-10 bg-brand-gold/10 text-brand-gold rounded-xl flex items-center justify-center">
-                  <FileText size={18}/>
+            <div key={f.id} className="flex items-center justify-between p-3 rounded-md bg-gray-50 border border-gray-100 hover:bg-gray-100 transition-colors">
+              <div className="flex items-center gap-3">
+                <div className="bg-white p-2 rounded border border-gray-200 text-red-500">
+                  <FileText size={16}/>
                 </div>
-                <span className="text-sm font-bold text-white">{f.title}</span>
+                <div>
+                   <p className="text-sm font-medium text-gray-700">{f.title}</p>
+                   <p className="text-xs text-gray-400 uppercase">PDF Document</p>
+                </div>
               </div>
-              <button className="p-3 bg-brand-gold text-brand-main rounded-xl hover:scale-110 transition-all">
-                <FileDown size={20}/>
-              </button>
+              <a href={f.url} target="_blank" className="text-brand-blue hover:text-blue-700 p-2">
+                <Download size={18}/>
+              </a>
             </div>
           ))}
           {pdfFiles.length === 0 && (
-            <p className="text-brand-muted text-center py-6 font-bold italic">لا توجد ملفات مرفقة حالياً</p>
+            <p className="text-gray-400 text-sm text-center py-4">لا توجد ملفات</p>
           )}
         </div>
       </div>
       
-      <div className="bg-brand-card p-10 md:p-12 rounded-[3.5rem] border border-white/5 shadow-xl flex flex-col items-center justify-center text-center group">
-        <div className="w-20 h-20 bg-brand-main rounded-3xl flex items-center justify-center text-brand-gold mb-6 shadow-premium group-hover:scale-110 transition-transform">
-          <Brain size={40} />
+      <div className="bg-gradient-to-r from-blue-50 to-white rounded-lg border border-blue-100 p-6 flex flex-col items-center text-center">
+        <div className="bg-white p-3 rounded-full shadow-sm text-brand-blue mb-3">
+          <Brain size={24} />
         </div>
-        <h4 className="text-white font-black text-2xl mb-4">اختبر معلوماتك</h4>
-        <p className="text-brand-muted text-sm mb-8 font-medium px-4">تأكد من استيعابك للمحاضرة عبر اختبار سريع وتفاعلي.</p>
+        <h4 className="font-bold text-gray-900 mb-2">اختبر نفسك</h4>
+        <p className="text-sm text-gray-600 mb-4">تأكد من فهمك للدرس عبر كويز سريع.</p>
         <button 
           onClick={onQuizClick} 
-          className="w-full ns-surface--gold-gradient text-brand-main font-black py-5 rounded-2xl ns-shadow--premium hover:scale-[1.03] transition-all text-xl"
+          className="btn-primary w-full max-w-xs"
         >
-          ابدأ الاختبار الآن
+          بدء الاختبار
         </button>
       </div>
     </div>

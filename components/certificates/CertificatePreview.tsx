@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { X, Award, ShieldCheck, QrCode, Download, Share2, Sparkles } from 'lucide-react';
+import { X, Award, ShieldCheck, Download } from 'lucide-react';
 
 interface Props {
   userName: string;
@@ -11,66 +11,46 @@ interface Props {
 
 export const CertificatePreview: React.FC<Props> = ({ userName, courseTitle, date, onClose }) => {
   return (
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 md:p-10">
-      <div className="absolute inset-0 bg-brand-main/95 backdrop-blur-2xl animate-fade-in" onClick={onClose}></div>
-      
-      <div className="relative w-full max-w-5xl animate-scale-up">
-        {/* Certificate Paper Design */}
-        <div className="bg-white p-1 md:p-4 rounded-xl shadow-[0_0_100px_rgba(251,191,36,0.3)]">
-          <div className="bg-[#fdfcf0] border-[12px] border-[#c5a059] p-8 md:p-16 text-center relative overflow-hidden">
-            
-            {/* Background Textures */}
-            <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: 'radial-gradient(#c5a059 2px, transparent 2px)', backgroundSize: '30px 30px' }}></div>
-            <div className="absolute -top-20 -right-20 w-80 h-80 border-[40px] border-[#c5a059]/10 rounded-full"></div>
-            
-            {/* Header */}
-            <div className="flex flex-col items-center gap-6 mb-12">
-               <div className="w-24 h-24 bg-[#c5a059] rounded-full flex items-center justify-center text-white shadow-xl">
-                  <Award size={48} />
-               </div>
-               <h1 className="text-2xl md:text-4xl font-serif font-bold text-[#1a1a1a] uppercase tracking-[0.2em] border-b-2 border-[#c5a059] pb-4 px-10">شهادة إتمام كورس</h1>
-            </div>
-
-            {/* Content */}
-            <div className="space-y-10 relative z-10">
-               <p className="text-[#666] text-lg italic font-serif">نشهد نحن منصة نيرسي للتعليم الطبي بأن الطالب:</p>
-               <h2 className="text-4xl md:text-6xl font-black text-[#c5a059] font-sans drop-shadow-sm">{userName}</h2>
-               <p className="text-[#666] text-lg font-serif">قد أتم بنجاح كافة متطلبات الكورس التدريبي بعنوان:</p>
-               <h3 className="text-2xl md:text-4xl font-bold text-[#1a1a1a] leading-tight">{courseTitle}</h3>
-               
-               <div className="flex flex-col md:flex-row items-center justify-around pt-12 gap-10">
-                  <div className="text-center space-y-2">
-                     <p className="text-[#999] text-[10px] font-bold uppercase tracking-widest">تاريخ الإصدار</p>
-                     <p className="text-[#1a1a1a] font-bold border-t border-[#c5a059]/30 pt-2 px-6">{date}</p>
-                  </div>
-                  
-                  <div className="relative">
-                     <div className="w-24 h-24 bg-white p-2 border border-[#c5a059]/30 shadow-inner rounded-lg">
-                        <QrCode size="100%" className="text-[#1a1a1a]" />
-                     </div>
-                     <p className="text-[#999] text-[8px] font-bold mt-2">تأكيد صحة الشهادة</p>
-                  </div>
-
-                  <div className="text-center space-y-2">
-                     <p className="text-[#999] text-[10px] font-bold uppercase tracking-widest">ختم الاعتماد</p>
-                     <div className="flex items-center justify-center text-[#c5a059]">
-                        <ShieldCheck size={48} />
-                     </div>
-                  </div>
-               </div>
-            </div>
-
-            <p className="mt-16 text-[#c5a059] font-black tracking-[0.5em] text-[10px] uppercase">Nursy Premium Education Platform</p>
-          </div>
+    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm">
+      <div className="bg-white rounded-lg shadow-xl w-full max-w-4xl overflow-hidden flex flex-col max-h-[90vh]">
+        <div className="p-4 border-b border-gray-200 flex justify-between items-center bg-gray-50">
+           <h3 className="font-bold text-gray-700">معاينة الشهادة</h3>
+           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={20}/></button>
         </div>
 
-        {/* Action Buttons */}
-        <div className="mt-8 flex justify-center gap-4">
-           <button className="bg-brand-gold text-brand-main px-8 py-4 rounded-2xl font-black flex items-center gap-3 shadow-glow hover:scale-105 transition-all">
-              <Download size={20} /> تحميل بجودة عالية (PDF)
-           </button>
-           <button onClick={onClose} className="bg-white/5 text-white p-4 rounded-2xl border border-white/10 hover:bg-white/10 transition-all">
-              <X size={24} />
+        <div className="flex-1 overflow-y-auto p-8 bg-gray-100 flex justify-center">
+           <div className="bg-white p-12 text-center shadow-lg max-w-2xl w-full border-[10px] border-double border-gray-200 relative">
+              <div className="w-20 h-20 mx-auto bg-brand-blue text-white rounded-full flex items-center justify-center mb-8">
+                 <Award size={40} />
+              </div>
+              
+              <h1 className="text-3xl font-serif font-bold text-gray-900 mb-2">شهادة إتمام</h1>
+              <p className="text-gray-500 italic mb-8">تمنح هذه الشهادة إلى</p>
+              
+              <h2 className="text-4xl font-bold text-brand-blue mb-8 border-b border-gray-200 pb-8 inline-block px-10">
+                 {userName}
+              </h2>
+              
+              <p className="text-gray-600 mb-2">لإتمامه بنجاح الكورس التدريبي:</p>
+              <h3 className="text-2xl font-bold text-gray-800 mb-12">{courseTitle}</h3>
+              
+              <div className="flex justify-between items-end text-sm text-gray-500 mt-12 pt-8 border-t border-gray-100">
+                 <div className="text-center">
+                    <p className="font-bold mb-1">{date}</p>
+                    <p className="text-xs uppercase tracking-wider">التاريخ</p>
+                 </div>
+                 <div className="text-center">
+                    <ShieldCheck className="mx-auto mb-2 text-brand-blue" size={32} />
+                    <p className="text-xs uppercase tracking-wider font-bold">معتمد من Nursy</p>
+                 </div>
+              </div>
+           </div>
+        </div>
+
+        <div className="p-4 border-t border-gray-200 bg-white flex justify-end gap-3">
+           <button onClick={onClose} className="btn-secondary text-sm">إغلاق</button>
+           <button className="btn-primary text-sm flex items-center gap-2">
+              <Download size={16} /> تحميل PDF
            </button>
         </div>
       </div>

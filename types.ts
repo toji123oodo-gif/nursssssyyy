@@ -1,55 +1,12 @@
 
-export type ContentType = 'video' | 'audio' | 'pdf' | 'document' | 'image';
-
-export interface ChatAttachment {
-  type: 'pdf' | 'audio';
-  url: string;
-  name: string;
-  size?: string;
-}
-
-export interface PostAttachment {
-  type: 'pdf' | 'audio' | 'image';
-  url: string;
-  name: string;
-  size?: string;
-}
-
-export interface SocialPost {
-  id: string;
-  userId: string;
-  userName: string;
-  userRole: string;
-  isPro: boolean;
-  content: string;
-  timestamp: string;
-  likes: number;
-  commentsCount: number;
-  channelId: string;
-  attachments: PostAttachment[];
-}
-
-export interface ChatMessage {
-  id: string;
-  userId: string;
-  userName: string;
-  text: string;
-  timestamp: string;
-  userRole?: 'admin' | 'student';
-  isPro?: boolean;
-  subject?: string;
-  attachment?: ChatAttachment;
-  quizRef?: {
-    quizId: string;
-    questionText: string;
-  };
-}
+export type ContentType = 'audio' | 'pdf' | 'video';
 
 export interface Question {
   id: string;
   text: string;
   options: string[];
   correctOptionIndex: number;
+  // Added explanation to support QuizPlayer.tsx
   explanation?: string;
 }
 
@@ -59,41 +16,33 @@ export interface Quiz {
   questions: Question[];
 }
 
-export interface Flashcard {
-  id: string;
-  front: string;
-  back: string;
-  hint?: string;
-  category?: string;
-}
-
 export interface ContentItem {
   id: string;
   type: ContentType;
   title: string;
   url: string;
-  duration?: string; 
-  fileSize?: string; 
+  // Added duration and fileSize to support data/courses.ts
+  duration?: string;
+  fileSize?: string;
 }
 
 export interface Lesson {
   id: string;
   title: string;
-  isLocked: boolean; 
-  contents: ContentItem[]; 
   duration?: string;
+  contents: ContentItem[];
   quiz?: Quiz;
-  flashcards?: Flashcard[];
+  // Added isLocked to support CoursesTab.tsx
+  isLocked?: boolean;
 }
 
 export interface Course {
   id: string;
   title: string;
   instructor: string;
-  image: string;
   subject: string;
+  image: string;
   lessons: Lesson[];
-  finalQuiz?: Quiz;
   price: number;
 }
 
@@ -103,20 +52,19 @@ export interface User {
   email: string;
   phone: string;
   role?: 'admin' | 'student';
-  lastSeen?: string; 
-  lastDevice?: string;
-  joinedAt?: string;
-  completedLessons?: string[]; 
-  completedExams?: string[];
-  quizGrades?: Record<string, number>;
-  hasCompletedTour?: boolean;
-  xp: number; 
-  level: number; 
-  streak: number; 
+  xp: number;
+  completedLessons?: string[];
   subscriptionTier: 'free' | 'pro';
-  subscriptionExpiry?: string | null;
+  // Added missing properties to support AppContext, Admin, Certificates, and ExamsTab
+  level?: number;
+  streak?: number;
+  joinedAt?: string;
+  completedExams?: string[];
+  lastDevice?: string;
+  quizGrades?: Record<string, number>;
 }
 
+// Added ActivationCode interface for Admin components
 export interface ActivationCode {
   id: string;
   code: string;
@@ -125,6 +73,7 @@ export interface ActivationCode {
   createdAt: string;
 }
 
+// Added Exam interface for ExamHub.tsx
 export interface Exam {
   id: string;
   title: string;

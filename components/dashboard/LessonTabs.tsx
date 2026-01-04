@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { BookOpen, MessageSquare, Edit3, Sparkles } from 'lucide-react';
+import { BookOpen, MessageSquare, Edit3 } from 'lucide-react';
 
 interface Props {
   activeTab: 'resources' | 'discussion' | 'notes';
@@ -9,26 +9,25 @@ interface Props {
 
 export const LessonTabs: React.FC<Props> = ({ activeTab, setActiveTab }) => {
   const tabs = [
-    { id: 'resources', label: 'المصادر المتاحة', icon: BookOpen },
-    { id: 'discussion', label: 'نقاش المحاضرة', icon: MessageSquare },
-    { id: 'notes', label: 'ملاحظاتي الخاصة', icon: Edit3 },
+    { id: 'resources', label: 'المصادر', icon: BookOpen },
+    { id: 'discussion', label: 'النقاشات', icon: MessageSquare },
+    { id: 'notes', label: 'ملاحظاتي', icon: Edit3 },
   ];
 
   return (
-    <div className="flex bg-brand-card/40 backdrop-blur-xl p-2 rounded-[2rem] border border-white/5 mb-10 overflow-x-auto ns-util--no-scrollbar">
+    <div className="flex border-b border-gray-200 mb-6">
       {tabs.map((tab) => (
         <button
           key={tab.id}
           onClick={() => setActiveTab(tab.id as any)}
-          className={`flex-1 flex items-center justify-center gap-3 px-8 py-4 rounded-2xl text-[11px] font-black uppercase tracking-widest transition-all duration-500 whitespace-nowrap ${
+          className={`flex-1 flex items-center justify-center gap-2 pb-3 pt-2 text-sm font-medium transition-colors border-b-2 ${
             activeTab === tab.id 
-            ? 'bg-brand-gold text-brand-main shadow-glow scale-[1.02]' 
-            : 'text-brand-muted hover:text-white hover:bg-white/5'
+            ? 'border-brand-blue text-brand-blue' 
+            : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
           <tab.icon size={16} />
           {tab.label}
-          {tab.id === 'discussion' && <span className="w-2 h-2 bg-red-500 rounded-full animate-pulse"></span>}
         </button>
       ))}
     </div>

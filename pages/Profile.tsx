@@ -2,7 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../context/AppContext';
 import { 
-  User as UserIcon, Phone, Save, Mail, Smartphone, UserCheck, Loader2, CheckCircle
+  User as UserIcon, Phone, Save, Mail, Smartphone, UserCheck, Loader2, CheckCircle,
+  X, Edit2, LogOut, Award
 } from 'lucide-react';
 import { ProfileHeader } from '../components/profile/ProfileHeader';
 import { StatsGrid } from '../components/profile/StatsGrid';
@@ -38,70 +39,86 @@ export const Profile: React.FC = () => {
   const progressPercentage = totalLessons > 0 ? Math.round((completedCount / totalLessons) * 100) : 0;
 
   return (
-    <div className="min-h-screen bg-brand-main pb-32 pt-12">
-      <div className="max-w-6xl mx-auto px-6 space-y-10">
-        
-        {successMessage && (
-          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-green-500 text-brand-main px-8 py-4 rounded-2xl font-black text-sm ns-shadow--glow-green flex items-center gap-3 animate-fade-in-up">
+    <div className="space-y-8">
+       {successMessage && (
+          <div className="fixed top-24 left-1/2 -translate-x-1/2 z-[200] bg-green-500 text-white px-8 py-4 rounded shadow-lg font-bold text-sm flex items-center gap-3 animate-bounce">
             <CheckCircle size={20} /> تم التحديث بنجاح!
           </div>
         )}
 
-        <ProfileHeader 
-          user={user} 
-          isEditing={isEditing} 
-          onEditToggle={() => setIsEditing(!isEditing)} 
-          onLogout={logout} 
-        />
+      <div className="cf-card p-8 flex flex-col md:flex-row items-center gap-8">
+        <div className="relative">
+            <div className="w-24 h-24 rounded-full bg-blue-50 dark:bg-blue-900/20 text-brand-blue flex items-center justify-center text-3xl font-bold border-4 border-white dark:border-[#202020] shadow-md">
+            {(user.name || 'U').charAt(0).toUpperCase()}
+            </div>
+        </div>
 
-        {isEditing ? (
-          <div className="ns-card p-10 md:p-14 shadow-2xl ns-animate--fade-in-up">
-            <h3 className="text-2xl font-black text-white flex items-center gap-4 mb-10">
-              <UserCheck className="text-brand-gold" /> تعديل بيانات الحساب
+        <div className="flex-1 text-center md:text-right space-y-2">
+            <h1 className="text-2xl font-bold text-main">{user.name}</h1>
+            <div className="flex items-center justify-center md:justify-start gap-3 text-sm text-muted">
+            <span>{user.email}</span>
+            <span className="w-1 h-1 bg-gray-300 dark:bg-white/20 rounded-full"></span>
+            <span className={`px-2 py-0.5 rounded text-xs font-bold uppercase ${user.subscriptionTier === 'pro' ? 'bg-blue-100 dark:bg-blue-900/30 text-brand-blue' : 'bg-gray-100 dark:bg-white/10 text-gray-600 dark:text-gray-400'}`}>
+                {user.subscriptionTier === 'pro' ? 'PRO Plan' : 'Free Plan'}
+            </span>
+            </div>
+        </div>
+
+        <div className="flex gap-3">
+            <button 
+            onClick={() => setIsEditing(!isEditing)} 
+            className="btn-secondary flex items-center gap-2"
+            >
+            {isEditing ? <X size={16}/> : <Edit2 size={16}/>}
+            {isEditing ? 'إلغاء' : 'تعديل'}
+            </button>
+            <button onClick={logout} className="px-4 py-2 bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 border border-red-100 dark:border-red-500/20 rounded text-sm font-medium flex items-center gap-2 hover:bg-red-100 dark:hover:bg-red-900/40 transition-all">
+            <LogOut size={16}/> خروج
+            </button>
+        </div>
+      </div>
+
+      {isEditing ? (
+          <div className="cf-card p-10">
+            <h3 className="text-xl font-bold text-main flex items-center gap-2 mb-8">
+              <UserCheck className="text-brand-orange" /> تعديل البيانات
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mb-10">
-              <div className="space-y-3">
-                <label className="text-[10px] text-brand-muted font-black uppercase tracking-[0.2em] px-2">اسمك الثلاثي</label>
-                <div className="relative">
-                  <UserIcon className="absolute right-5 top-1/2 -translate-y-1/2 text-brand-gold" size={20} />
-                  <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="w-full bg-brand-main border-2 border-brand-gold/30 rounded-2xl pr-14 pl-6 py-5 text-white font-black outline-none focus:border-brand-gold transition-all" />
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted">اسمك الثلاثي</label>
+                <input type="text" value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="cf-input" />
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] text-brand-muted font-black uppercase tracking-[0.2em] px-2">رقم الواتساب</label>
-                <div className="relative">
-                  <Phone className="absolute right-5 top-1/2 -translate-y-1/2 text-brand-gold" size={20} />
-                  <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="w-full bg-brand-main border-2 border-brand-gold/30 rounded-2xl pr-14 pl-6 py-5 text-white font-black outline-none focus:border-brand-gold transition-all" />
-                </div>
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-muted">رقم الهاتف</label>
+                <input type="tel" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="cf-input" />
               </div>
             </div>
-            <button onClick={handleSave} disabled={isSaving} className="w-full ns-surface--gold-gradient text-brand-main font-black py-6 rounded-2xl ns-shadow--glow text-xl flex items-center justify-center gap-3 hover:scale-[1.02] transition-all disabled:opacity-50">
-              {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={24}/> حفظ التغييرات</>}
+            <button onClick={handleSave} disabled={isSaving} className="w-full btn-primary py-3 flex items-center justify-center gap-2">
+              {isSaving ? <Loader2 className="animate-spin" /> : <><Save size={18}/> حفظ التغييرات</>}
             </button>
           </div>
         ) : (
           <StatsGrid progress={progressPercentage} />
-        )}
+      )}
 
-        {!isEditing && (
-          <div className="ns-card p-10 flex flex-col md:flex-row justify-between items-center gap-6">
-             <div className="flex items-center gap-6">
-                <div className="bg-white/5 p-4 rounded-2xl text-brand-gold"><Mail size={32} /></div>
+      {!isEditing && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="cf-card p-6 flex items-center gap-4">
+                <div className="bg-gray-50 dark:bg-white/5 p-3 rounded text-brand-orange"><Mail size={24} /></div>
                 <div>
-                   <p className="text-brand-muted text-[10px] font-black uppercase tracking-widest">البريد الإلكتروني</p>
-                   <p className="text-white font-black text-xl">{user.email}</p>
+                    <p className="text-xs font-bold text-muted uppercase">البريد الإلكتروني</p>
+                    <p className="text-main font-semibold">{user.email}</p>
                 </div>
-             </div>
-             <div className="flex items-center gap-6">
-                <div className="bg-white/5 p-4 rounded-2xl text-brand-gold"><Smartphone size={32} /></div>
+            </div>
+             <div className="cf-card p-6 flex items-center gap-4">
+                <div className="bg-gray-50 dark:bg-white/5 p-3 rounded text-brand-orange"><Smartphone size={24} /></div>
                 <div>
-                   <p className="text-brand-muted text-[10px] font-black uppercase tracking-widest">رقم الهاتف</p>
-                   <p className="text-white font-black text-xl">{user.phone || 'غير مسجل'}</p>
+                    <p className="text-xs font-bold text-muted uppercase">رقم الهاتف</p>
+                    <p className="text-main font-semibold">{user.phone || 'غير مسجل'}</p>
                 </div>
-             </div>
-          </div>
-        )}
-      </div>
+            </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -5,127 +5,55 @@
 
 @layer base {
   body {
-    @apply bg-brand-main text-brand-text font-sans m-0 p-0 overflow-x-hidden antialiased;
-    scroll-behavior: smooth;
+    @apply bg-[#F9FAFB] dark:bg-[#101010] text-[#333333] dark:text-[#D4D4D4] font-sans m-0 p-0 overflow-x-hidden antialiased transition-colors duration-200;
   }
-
-  ::-webkit-scrollbar {
-    @apply w-1.5;
-  }
-
-  ::-webkit-scrollbar-track {
-    @apply bg-brand-main;
-  }
-
-  ::-webkit-scrollbar-thumb {
-    @apply bg-brand-card rounded-full border border-brand-main;
-  }
-
-  ::-webkit-scrollbar-thumb:hover {
-    @apply bg-brand-gold;
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-semibold tracking-tight text-[#1a1a1a] dark:text-[#FAFAFA];
   }
 }
 
 @layer utilities {
-  .perspective-1000 {
-    perspective: 1000px;
-  }
-  .transform-style-3d {
-    transform-style: preserve-3d;
-  }
-  .backface-hidden {
-    backface-visibility: hidden;
-  }
-  .rotate-y-180 {
-    transform: rotateY(180deg);
-  }
-  .text-glow {
-    text-shadow: 0 0 15px rgba(251, 191, 36, 0.4);
-  }
-  .bg-mesh {
-    background-image: 
-      radial-gradient(at 0% 0%, rgba(251, 191, 36, 0.1) 0, transparent 50%), 
-      radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.1) 0, transparent 50%),
-      radial-gradient(at 50% 100%, rgba(251, 191, 36, 0.05) 0, transparent 50%);
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
   }
 }
 
 @layer components {
-  /* Block: Nursy Card (ns-card) */
-  .ns-card {
-    @apply bg-brand-card rounded-[2.5rem] border border-white/5 shadow-xl transition-all duration-500;
+  /* Cloudflare-like Buttons: Boxier, subtle borders */
+  .btn-primary {
+    @apply bg-[#F38020] hover:bg-[#c7620e] text-white px-4 py-1.5 rounded-[4px] text-sm font-semibold transition-colors shadow-sm border border-transparent flex items-center justify-center gap-2;
+  }
+  .btn-secondary {
+    @apply bg-white dark:bg-[#2C2C2C] text-[#333] dark:text-[#E5E5E5] border border-[#d1d5db] dark:border-[#404040] px-4 py-1.5 rounded-[4px] text-sm font-medium hover:bg-gray-50 dark:hover:bg-[#363636] transition-colors flex items-center justify-center gap-2;
+  }
+  
+  /* Cloudflare-like Cards: High contrast border, almost no shadow in dark mode */
+  .cf-card {
+    @apply bg-white dark:bg-[#1E1E1E] border border-[#E5E5E5] dark:border-[#333] rounded-[4px] shadow-sm transition-colors duration-200;
+  }
+  
+  .cf-header {
+    @apply px-5 py-3 border-b border-[#E5E5E5] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#252525] rounded-t-[4px] flex justify-between items-center;
   }
 
-  .ns-card--glass {
-    @apply bg-white/10 backdrop-blur-[24px] border border-white/20 shadow-2xl;
+  .cf-input {
+    @apply w-full bg-white dark:bg-[#101010] border border-[#C6C6C6] dark:border-[#404040] rounded-[4px] px-3 py-1.5 text-sm text-[#333] dark:text-white focus:outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all placeholder:text-gray-400 dark:placeholder:text-gray-600;
+  }
+  
+  .cf-link {
+    @apply text-[#0051C3] dark:text-[#68b5fb] hover:underline font-medium cursor-pointer text-sm;
   }
 
-  .ns-card--premium {
-    @apply border-brand-gold/30 shadow-premium;
+  /* Badge Styles */
+  .cf-badge {
+    @apply px-2 py-0.5 rounded-[3px] text-[11px] font-semibold border;
   }
-
-  /* Block: Nursy Surface (ns-surface) */
-  .ns-surface--gold-gradient {
-    background: linear-gradient(135deg, #fbbf24 0%, #d97706 100%);
+  
+  /* Text Utilities */
+  .text-main {
+    @apply text-[#1a1a1a] dark:text-[#EDEDED];
   }
-
-  /* Block: Nursy Text (ns-text) */
-  .ns-text--gradient {
-    background: linear-gradient(to left, #fff, #fbbf24);
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-  }
-
-  /* Block: Nursy Reveal (ns-reveal) */
-  .ns-reveal {
-    opacity: 0;
-    transform: translateY(30px) scale(0.98);
-    transition: all 0.8s cubic-bezier(0.16, 1, 0.3, 1);
-  }
-
-  .ns-reveal--active {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-
-  /* Block: Nursy Shadow (ns-shadow) */
-  .ns-shadow--premium {
-    box-shadow: 0 20px 50px -15px rgba(251, 191, 36, 0.3);
-  }
-
-  .ns-shadow--glow {
-    box-shadow: 0 0 40px -10px rgba(251, 191, 36, 0.5);
-  }
-
-  .ns-shadow--glow-green {
-    box-shadow: 0 0 30px -5px rgba(34, 197, 94, 0.4);
-  }
-
-  /* Animations */
-  @keyframes fadeInUp {
-    0% { opacity: 0; transform: translateY(20px); }
-    100% { opacity: 1; transform: translateY(0); }
-  }
-
-  .animate-fade-in-up {
-    animation: fadeInUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-
-  @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-10px); }
-  }
-
-  .animate-float {
-    animation: float 4s ease-in-out infinite;
-  }
-
-  @keyframes scale-up {
-    0% { transform: scale(0.98); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  .animate-scale-up {
-    animation: scale-up 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  .text-muted {
+    @apply text-[#595959] dark:text-[#A3A3A3];
   }
 }

@@ -8,20 +8,12 @@ import { AppProvider, useApp } from './context/AppContext';
 import { Layout } from './components/Layout';
 import { Landing } from './pages/Landing';
 import { Dashboard } from './pages/Dashboard';
-import { Wallet } from './pages/Wallet';
 import { Login } from './pages/Login';
 import { Signup } from './pages/Signup';
 import { Admin } from './pages/Admin';
 import { Profile } from './pages/Profile';
-import { HelpCenter } from './pages/HelpCenter';
 import { CourseDetail } from './pages/CourseDetail';
-import { Certificates } from './pages/Certificates';
-import { Leaderboard } from './pages/Leaderboard';
-import { Flashcards } from './pages/Flashcards';
-import { VideoAI } from './pages/VideoAI';
 import { Community } from './pages/Community';
-import { ExamHub } from './components/ExamHub';
-import { OnboardingTour } from './components/OnboardingTour';
 import { jwtUtils } from './utils/jwt';
 
 // Protected Route Component
@@ -41,16 +33,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
 };
 
 const AppContent: React.FC = () => {
-  const { user } = useApp();
   return (
     <Layout>
        <Routes>
           <Route path="/" element={<Landing />} />
           <Route path="/login" element={<Login />} />
           <Route path="/signup" element={<Signup />} />
-          <Route path="/course/:courseId" element={<CourseDetail />} />
-          <Route path="/help" element={<HelpCenter />} />
-          <Route path="/ai-vision" element={<VideoAI />} />
           
           <Route 
             path="/dashboard" 
@@ -69,34 +57,10 @@ const AppContent: React.FC = () => {
             } 
           />
           <Route 
-            path="/wallet" 
+            path="/course/:courseId" 
             element={
               <ProtectedRoute>
-                <Wallet />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/certificates" 
-            element={
-              <ProtectedRoute>
-                <Certificates />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/leaderboard" 
-            element={
-              <ProtectedRoute>
-                <Leaderboard />
-              </ProtectedRoute>
-            } 
-          />
-          <Route 
-            path="/flashcards" 
-            element={
-              <ProtectedRoute>
-                <Flashcards />
+                <CourseDetail />
               </ProtectedRoute>
             } 
           />
@@ -119,13 +83,6 @@ const AppContent: React.FC = () => {
           
           <Route path="*" element={<Navigate to="/" replace />} />
        </Routes>
-       
-       {user && (
-         <>
-           <ExamHub />
-           <OnboardingTour />
-         </>
-       )}
     </Layout>
   );
 };

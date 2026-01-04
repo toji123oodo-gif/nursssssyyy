@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Award, Download, Lock, CheckCircle, Share2, Sparkles } from 'lucide-react';
+import { Award, Lock, Eye, Download } from 'lucide-react';
 
 interface Props {
   courseTitle: string;
@@ -11,47 +11,44 @@ interface Props {
 
 export const CertificateCard: React.FC<Props> = ({ courseTitle, isUnlocked, completionDate, onPreview }) => {
   return (
-    <div className={`relative group rounded-[3rem] p-8 border-2 transition-all duration-700 overflow-hidden ${
+    <div className={`rounded-lg border p-6 transition-all ${
       isUnlocked 
-      ? 'bg-brand-card border-brand-gold/30 shadow-glow hover:scale-[1.02]' 
-      : 'bg-brand-card/40 border-white/5 opacity-60 grayscale'
+      ? 'bg-white border-gray-200 shadow-sm hover:shadow-md' 
+      : 'bg-gray-50 border-gray-200 opacity-75'
     }`}>
-      {isUnlocked && (
-        <div className="absolute -top-10 -right-10 w-40 h-40 bg-brand-gold/10 blur-3xl rounded-full group-hover:bg-brand-gold/20 transition-all"></div>
-      )}
-      
-      <div className="flex flex-col h-full space-y-6 relative z-10">
-        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-500 ${
-          isUnlocked ? 'bg-brand-gold text-brand-main shadow-glow' : 'bg-white/5 text-brand-muted'
-        }`}>
-          {isUnlocked ? <Award size={32} /> : <Lock size={32} />}
-        </div>
-
-        <div className="flex-1">
-          <h3 className="text-xl font-black text-white mb-2 leading-tight">{courseTitle}</h3>
-          <p className="text-[10px] text-brand-muted font-black uppercase tracking-widest">
-            {isUnlocked ? `تم الإنجاز في ${completionDate}` : 'أكمل الكورس بنسبة 100% للحصول عليها'}
-          </p>
-        </div>
-
-        {isUnlocked ? (
-          <div className="flex gap-3">
-            <button 
-              onClick={onPreview}
-              className="flex-1 bg-brand-gold text-brand-main font-black py-4 rounded-xl text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 shadow-glow hover:brightness-110 transition-all"
-            >
-              <Sparkles size={14} /> عرض الشهادة
-            </button>
-            <button className="p-4 bg-white/5 text-brand-gold rounded-xl hover:bg-brand-gold hover:text-brand-main transition-all border border-white/5">
-              <Download size={18} />
-            </button>
-          </div>
-        ) : (
-          <div className="w-full h-1 bg-white/5 rounded-full overflow-hidden">
-             <div className="h-full bg-brand-gold/20 w-1/3"></div>
-          </div>
-        )}
+      <div className="flex items-start justify-between mb-4">
+         <div className={`p-3 rounded-lg ${isUnlocked ? 'bg-brand-blue text-white' : 'bg-gray-200 text-gray-500'}`}>
+            {isUnlocked ? <Award size={24} /> : <Lock size={24} />}
+         </div>
+         {isUnlocked && (
+            <span className="px-2 py-1 bg-green-50 text-green-700 text-[10px] font-bold uppercase rounded">
+               مكتملة
+            </span>
+         )}
       </div>
+
+      <h3 className="font-bold text-gray-900 mb-1">{courseTitle}</h3>
+      <p className="text-xs text-gray-500 mb-6">
+        {isUnlocked ? `تاريخ الإصدار: ${completionDate}` : 'أكمل الكورس لفتح الشهادة'}
+      </p>
+
+      {isUnlocked ? (
+        <div className="flex gap-2">
+          <button 
+            onClick={onPreview}
+            className="flex-1 btn-primary text-xs flex items-center justify-center gap-2"
+          >
+            <Eye size={14} /> عرض
+          </button>
+          <button className="p-2 btn-secondary text-gray-500 hover:text-gray-900">
+            <Download size={14} />
+          </button>
+        </div>
+      ) : (
+         <div className="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-full bg-gray-400 w-[40%]"></div>
+         </div>
+      )}
     </div>
   );
 };
