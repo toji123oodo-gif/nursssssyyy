@@ -17,8 +17,8 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
   const [isSidebarOpen, setSidebarOpen] = useState(false);
   const [isPaletteOpen, setIsPaletteOpen] = useState(false);
 
-  // Updated Owner Email
-  const OWNER_EMAIL = "toji123oodo@gmail.com";
+  // Updated Owner Emails
+  const OWNERS = ["toji123oodo@gmail.com", "Mstfymdht542@gmail.com"];
 
   // Command Palette Keyboard Shortcut
   useEffect(() => {
@@ -58,7 +58,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
       return false;
   };
 
-  const isAdminOrOwner = user && (user.email === OWNER_EMAIL || user.role === 'admin');
+  const isAdminOrOwner = user && (OWNERS.includes(user.email) || user.role === 'admin');
 
   return (
     <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#101010] flex font-sans text-sm">
@@ -137,7 +137,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
               <User size={16} /> My Profile
            </Link>
 
-           {/* ADMIN SECTION - Visible to Owner AND Admin Role */}
+           {/* ADMIN SECTION - Visible to Owners AND Admin Role */}
            {isAdminOrOwner && (
              <>
                <div className="my-4 border-t border-[#E5E5E5] dark:border-[#333]"></div>

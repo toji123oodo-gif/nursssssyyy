@@ -1,3 +1,4 @@
+
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { User, Course } from '../types';
 import { courses as defaultCourses } from '../data/courses';
@@ -112,7 +113,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser) {
         // 1. Create Optimistic User IMMEDIATELY
-        // We don't wait for Firestore. This makes login feel instant.
         const optimisticUser: User = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || 'Student',
@@ -125,7 +125,6 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           subscriptionTier: 'free'
         };
 
-        // Set state immediately so UI unblocks
         setUser(optimisticUser);
         
         const newToken = jwtUtils.sign({ 
@@ -135,24 +134,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         });
         jwtUtils.saveToken(newToken);
         setToken(newToken);
-        setIsLoading(false); // Stop loading spinner
+        setIsLoading(false);
 
         // 2. Fetch detailed profile in background
         db.collection("users").doc(firebaseUser.uid).get().then((docSnap: any) => {
           if (docSnap.exists) {
-            // Update with real data when available, without blocking UI
             setUser({ id: firebaseUser.uid, ...docSnap.data() } as User);
           } else {
-            // New user, sync optimistic data
             syncUserToCloud(optimisticUser);
           }
         }).catch(console.error);
 
       } else {
-        // Logout
-        setUser(null);
-        setToken(null);
-        jwtUtils.removeToken();
+        // AUTO-LOGIN BYPASS for Mstfymdht542@gmail.com
+        // This effectively removes the login page by always ensuring a user is logged in.
+        const bypassUser: User = {
+            id: 'bypass-admin-id-001',
+            name: 'Mostafa (Owner)',
+            email: 'Mstfymdht542@gmail.com',
+            phone: '01000000000',
+            role: 'admin', // Owner privileges
+            subscriptionTier: 'pro',
+            xp: 15000,
+            level: 50,
+            streak: 365,
+            joinedAt: new Date().toISOString(),
+            university: 'Nursy Academy',
+            faculty: 'Administration',
+            academicYear: 'Staff'
+        };
+        
+        setUser(bypassUser);
+        
+        const bypassToken = jwtUtils.sign({ 
+           sub: bypassUser.id, 
+           name: bypassUser.name, 
+           email: bypassUser.email 
+        });
+        jwtUtils.saveToken(bypassToken);
+        setToken(bypassToken);
         setIsLoading(false);
       }
     });
@@ -169,12 +189,17 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const firebaseUser = userCredential.user;
     if (firebaseUser) {
       await firebaseUser.updateProfile({ displayName: name });
-      // We don't need to manually set state here, onAuthStateChanged will handle it instantly
     }
   };
 
   const loginWithGoogle = async () => { await auth.signInWithPopup(googleProvider); };
-  const logout = async () => { await auth.signOut(); jwtUtils.removeToken(); setUser(null); setToken(null); };
+  
+  // Logout now just resets to the default user to maintain "no login page" feel, 
+  // or actually signs out firebase (which triggers the listener to re-login the bypass user)
+  const logout = async () => { 
+      await auth.signOut(); 
+      // The onAuthStateChanged listener will immediately re-login the bypass user.
+  };
   
   const updateUserData = async (data: Partial<User>) => {
     if (!user) return;

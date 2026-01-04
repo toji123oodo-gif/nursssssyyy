@@ -20,8 +20,8 @@ export const CoursesTab: React.FC = () => {
   const [activeLessonTab, setActiveLessonTab] = useState<'content' | 'quiz' | 'settings'>('content');
   const [showMobileSettings, setShowMobileSettings] = useState(false); // Mobile toggle for metadata
 
-  const OWNER_EMAIL = "toji123oodo@gmail.com";
-  const isOwner = user?.email === OWNER_EMAIL;
+  const OWNERS = ["toji123oodo@gmail.com", "Mstfymdht542@gmail.com"];
+  const isOwner = user && OWNERS.includes(user.email);
 
   const openNewCourseModal = () => {
     if (!isOwner) return;
