@@ -5,7 +5,7 @@ import {
   MessageSquare, Image as ImageIcon, FileText, 
   Heart, Share2, MoreHorizontal, Search, 
   Plus, X, Globe, Brain, Zap, HelpCircle,
-  Send, User as UserIcon, Users, UploadCloud, MessageCircle
+  Send, User as UserIcon, Users, UploadCloud, MessageCircle, Activity, Baby
 } from 'lucide-react';
 import { CommunityGroup, ChatMessage } from '../types';
 
@@ -210,7 +210,7 @@ export const Community: React.FC = () => {
            {INITIAL_GROUPS.map(group => (
              <div key={group.id} className="cf-card p-6 flex flex-col items-center text-center hover:border-[#F38020] transition-all group">
                 <div className="w-16 h-16 bg-orange-50 dark:bg-orange-900/10 rounded-full flex items-center justify-center text-[#F38020] mb-4 group-hover:scale-110 transition-transform">
-                   {group.icon === 'Brain' ? <Brain size={32}/> : group.icon === 'Zap' ? <Zap size={32}/> : <Globe size={32}/>}
+                   {group.icon === 'Brain' ? <Brain size={32}/> : group.icon === 'Zap' ? <Zap size={32}/> : group.icon === 'Activity' ? <Activity size={32}/> : group.icon === 'Baby' ? <Baby size={32}/> : <Globe size={32}/>}
                 </div>
                 <h3 className="font-bold text-lg text-main mb-2">{group.name}</h3>
                 <p className="text-sm text-muted mb-4 line-clamp-2">{group.description}</p>
