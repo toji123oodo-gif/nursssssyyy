@@ -96,10 +96,36 @@ export const Community: React.FC = () => {
   };
 
   return (
-    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start animate-in fade-in slide-in-from-bottom-4">
       
-      {/* Sidebar (Channels) */}
-      <div className="lg:col-span-1 space-y-6">
+      {/* 
+          MOBILE: Horizontal Scrollable Channels 
+          Shows only on small screens (< lg)
+      */}
+      <div className="lg:hidden col-span-1 overflow-x-auto pb-2 -mx-4 px-4 scrollbar-hide">
+        <div className="flex gap-2">
+          {CHANNELS.map(channel => (
+            <button
+              key={channel.id}
+              onClick={() => setActiveChannel(channel.id)}
+              className={`flex items-center gap-2 px-4 py-2 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+                activeChannel === channel.id 
+                ? 'bg-[#F38020] text-white border-[#F38020] shadow-md shadow-orange-500/20' 
+                : 'bg-white dark:bg-[#1E1E1E] text-gray-600 dark:text-gray-300 border-gray-200 dark:border-[#333]'
+              }`}
+            >
+              <channel.icon size={14} />
+              {channel.name}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 
+          DESKTOP: Sidebar (Channels) 
+          Hidden on mobile, block on large screens
+      */}
+      <div className="hidden lg:block lg:col-span-1 space-y-6">
         <div className="cf-card overflow-hidden">
           <div className="p-4 border-b border-[#E5E5E5] dark:border-white/10 bg-gray-50 dark:bg-[#1A1A1A]">
              <h3 className="font-bold text-main text-sm">المجتمعات</h3>
@@ -122,8 +148,8 @@ export const Community: React.FC = () => {
           </div>
         </div>
 
-        {/* Top Contributors (Optional Widget) */}
-        <div className="cf-card p-4 hidden lg:block">
+        {/* Top Contributors Widget */}
+        <div className="cf-card p-4">
            <h3 className="text-xs font-bold text-muted uppercase tracking-wider mb-4">أعلى المساهمين</h3>
            <div className="space-y-3">
              {[1,2,3].map(i => (
@@ -153,15 +179,15 @@ export const Community: React.FC = () => {
            >
              شارك سؤالك أو معلومة جديدة...
            </button>
-           <button className="text-muted hover:text-brand-orange p-2">
+           <button className="text-muted hover:text-brand-orange p-2 hidden sm:block">
              <ImageIcon size={20} />
            </button>
         </div>
 
         {/* Create Post Modal */}
         {isCreateModalOpen && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-            <div className="bg-white dark:bg-[#202020] rounded-lg shadow-xl w-full max-w-lg overflow-hidden border border-[#E5E5E5] dark:border-white/10">
+          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm px-4">
+            <div className="bg-white dark:bg-[#202020] rounded-lg shadow-xl w-full max-w-lg overflow-hidden border border-[#E5E5E5] dark:border-white/10 animate-in zoom-in-95 duration-200">
                <div className="p-4 border-b border-[#E5E5E5] dark:border-white/10 flex justify-between items-center">
                   <h3 className="font-bold text-main">إنشاء منشور</h3>
                   <button onClick={() => setIsCreateModalOpen(false)} className="text-muted hover:text-main"><X size={20}/></button>

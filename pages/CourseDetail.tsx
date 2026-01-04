@@ -23,21 +23,21 @@ export const CourseDetail: React.FC = () => {
   
   // Set initial active lesson
   React.useEffect(() => {
-     if (course && course.lessons.length > 0 && !activeLessonId) {
+     if (course && course.lessons?.length > 0 && !activeLessonId) {
         setActiveLessonId(course.lessons[0].id);
      }
   }, [course]);
 
-  if (!course) return <div className="p-8 text-center text-muted">Configuration not found.</div>;
+  if (!course) return <div className="p-8 text-center text-muted">Course not found.</div>;
 
-  const activeLesson = course.lessons.find(l => l.id === activeLessonId);
+  const activeLesson = course.lessons?.find(l => l.id === activeLessonId);
   const isCompleted = (id: string) => user?.completedLessons?.includes(id);
 
   return (
-    <div className="h-[calc(100vh-6rem)] flex flex-col">
+    <div className="flex flex-col h-[calc(100vh-8rem)] lg:h-[calc(100vh-6rem)]">
       {activeQuizId && (
         <QuizPlayer 
-          quiz={course.lessons.find(l => l.id === activeQuizId)?.quiz!} 
+          quiz={course.lessons?.find(l => l.id === activeQuizId)?.quiz!} 
           onComplete={() => {}} 
           onClose={() => setActiveQuizId(null)} 
         />
@@ -50,42 +50,34 @@ export const CourseDetail: React.FC = () => {
                <ArrowLeft size={16} className="text-main" />
             </Link>
             <div>
-               <h1 className="text-lg font-bold text-main leading-tight">{course.title}</h1>
+               <h1 className="text-sm md:text-lg font-bold text-main leading-tight line-clamp-1">{course.title}</h1>
                <p className="text-xs text-muted flex items-center gap-1">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
                   {activeLesson?.title || 'Select a lesson'}
                </p>
             </div>
          </div>
-         <div className="flex gap-2">
-             <button 
-               onClick={() => setActiveTab(activeTab === 'content' ? 'overview' : 'content')}
-               className="btn-secondary text-xs"
-             >
-               <LayoutIcon size={14} /> View
-             </button>
-         </div>
       </div>
 
-      {/* Main Split Layout */}
-      <div className="flex-1 flex gap-6 overflow-hidden min-h-0">
+      {/* Main Split Layout: Flex Col on Mobile, Row on Desktop */}
+      <div className="flex-1 flex flex-col lg:flex-row gap-6 overflow-hidden min-h-0">
          
          {/* LEFT: Content Area (Scrollable) */}
-         <div className="flex-1 flex flex-col bg-white dark:bg-[#1E1E1E] border border-[#E5E5E5] dark:border-[#333] rounded-[8px] shadow-sm overflow-hidden">
+         <div className="flex-1 flex flex-col bg-white dark:bg-[#1E1E1E] border border-[#E5E5E5] dark:border-[#333] rounded-[8px] shadow-sm overflow-hidden order-1 lg:order-1 h-1/2 lg:h-auto">
             {activeLesson ? (
                <div className="flex-1 overflow-y-auto">
                   {/* Mock Video Player Area */}
-                  <div className="aspect-video bg-black flex items-center justify-center relative group">
+                  <div className="aspect-video bg-black flex items-center justify-center relative group sticky top-0 z-10">
                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
                      <Play size={48} className="text-white opacity-80" fill="white" />
                      <span className="absolute bottom-4 left-4 text-white text-xs font-mono">Video Playback Placeholder</span>
                   </div>
 
-                  <div className="p-8 max-w-4xl mx-auto space-y-8">
+                  <div className="p-6 md:p-8 max-w-4xl mx-auto space-y-6 md:space-y-8">
                      <div>
-                        <h2 className="text-2xl font-bold text-main mb-2">{activeLesson.title}</h2>
-                        <p className="text-muted leading-relaxed">
-                           In this lesson, we cover the fundamental aspects of the topic. Please review the attached audio notes and PDF documents before taking the quiz.
+                        <h2 className="text-xl md:text-2xl font-bold text-main mb-2">{activeLesson.title}</h2>
+                        <p className="text-sm md:text-base text-muted leading-relaxed">
+                           {activeLesson.description || "Review the attached audio notes and PDF documents before taking the quiz."}
                         </p>
                      </div>
 
@@ -93,13 +85,13 @@ export const CourseDetail: React.FC = () => {
                         <h3 className="text-xs font-bold text-muted uppercase tracking-wider">Lesson Materials</h3>
                         
                         {/* Audio Content */}
-                        {activeLesson.contents.filter(c => c.type === 'audio').map(audio => (
+                        {activeLesson.contents?.filter(c => c.type === 'audio').map(audio => (
                            <AudioPlayer key={audio.id} url={audio.url} title={audio.title} />
                         ))}
 
                         {/* PDF & Quiz Grid */}
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                           {activeLesson.contents.filter(c => c.type === 'pdf').map(pdf => (
+                           {activeLesson.contents?.filter(c => c.type === 'pdf').map(pdf => (
                               <a 
                                  key={pdf.id} href={pdf.url} target="_blank" 
                                  className="flex items-center gap-3 p-4 border border-[#E5E5E5] dark:border-[#333] rounded-[6px] hover:border-[#F38020] transition-all group bg-[#FAFAFA] dark:bg-[#252525]"
@@ -115,7 +107,7 @@ export const CourseDetail: React.FC = () => {
                               </a>
                            ))}
 
-                           {activeLesson.quiz && (
+                           {activeLesson.quiz && activeLesson.quiz.questions?.length > 0 && (
                               <button 
                                  onClick={() => setActiveQuizId(activeLesson.id)}
                                  className="flex items-center gap-3 p-4 border border-blue-200 dark:border-blue-900 bg-blue-50 dark:bg-blue-900/10 rounded-[6px] hover:shadow-md transition-all text-left"
@@ -138,8 +130,8 @@ export const CourseDetail: React.FC = () => {
             )}
          </div>
 
-         {/* RIGHT: Playlist / Syllabus */}
-         <div className="w-80 flex flex-col bg-white dark:bg-[#1E1E1E] border border-[#E5E5E5] dark:border-[#333] rounded-[8px] shadow-sm overflow-hidden shrink-0">
+         {/* RIGHT: Playlist / Syllabus - Full width on mobile, Side on Desktop */}
+         <div className="w-full lg:w-80 flex flex-col bg-white dark:bg-[#1E1E1E] border border-[#E5E5E5] dark:border-[#333] rounded-[8px] shadow-sm overflow-hidden shrink-0 order-2 lg:order-2 h-1/2 lg:h-auto">
             <div className="p-4 border-b border-[#E5E5E5] dark:border-[#333] bg-[#FAFAFA] dark:bg-[#252525]">
                <h3 className="text-xs font-bold text-muted uppercase tracking-wider">Course Syllabus</h3>
                <div className="mt-2 flex items-center gap-2">
@@ -151,7 +143,7 @@ export const CourseDetail: React.FC = () => {
             </div>
 
             <div className="flex-1 overflow-y-auto">
-               {course.lessons.map((lesson, idx) => {
+               {course.lessons?.map((lesson, idx) => {
                   const active = activeLessonId === lesson.id;
                   const locked = lesson.isLocked;
                   const done = isCompleted(lesson.id);

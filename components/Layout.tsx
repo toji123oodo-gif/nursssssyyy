@@ -32,6 +32,11 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     return () => document.removeEventListener('keydown', down);
   }, []);
 
+  // Close sidebar on route change (Mobile)
+  useEffect(() => {
+    setSidebarOpen(false);
+  }, [location.pathname]);
+
   const navLinks = [
     { path: '/dashboard', label: 'Overview', icon: Home },
     { path: '/schedule', label: 'Schedule', icon: Calendar },
@@ -59,8 +64,16 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
     <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#101010] flex font-sans text-sm">
       <CommandPalette isOpen={isPaletteOpen} onClose={() => setIsPaletteOpen(false)} />
       
-      {/* Sidebar - Desktop Only */}
-      <aside className={`fixed inset-y-0 left-0 z-[100] w-64 bg-white dark:bg-[#1E1E1E] border-r border-[#E5E5E5] dark:border-[#333] flex flex-col transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:static`}>
+      {/* Mobile Sidebar Overlay */}
+      {isSidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-[90] lg:hidden backdrop-blur-sm transition-opacity"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed inset-y-0 left-0 z-[100] w-64 bg-white dark:bg-[#1E1E1E] border-r border-[#E5E5E5] dark:border-[#333] flex flex-col transition-transform duration-300 lg:translate-x-0 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:static shadow-xl lg:shadow-none`}>
         
         {/* Logo Area */}
         <div className="h-14 flex items-center gap-3 px-5 border-b border-[#E5E5E5] dark:border-[#333]">
@@ -68,13 +81,13 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
             <Cloud size={20} strokeWidth={2.5} />
           </div>
           <span className="font-bold text-base text-main tracking-tight">Nursy<span className="text-[#F38020]">Platform</span></span>
-          <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-gray-500">
-            <X size={18} />
+          <button onClick={() => setSidebarOpen(false)} className="lg:hidden ml-auto text-gray-500 hover:text-red-500 transition-colors">
+            <X size={20} />
           </button>
         </div>
 
         {/* Navigation */}
-        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5">
+        <div className="flex-1 overflow-y-auto py-4 px-3 space-y-0.5 no-scrollbar">
           <div className="px-3 py-2 text-[10px] font-bold text-muted uppercase tracking-wider">
             Workspace
           </div>
@@ -166,7 +179,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
         {/* Top Header */}
         <header className="h-14 bg-white dark:bg-[#1E1E1E] border-b border-[#E5E5E5] dark:border-[#333] flex items-center justify-between px-6 shadow-[0_1px_2px_rgba(0,0,0,0.02)] z-10 sticky top-0">
           <div className="flex items-center gap-3 flex-1">
-            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted hover:text-main">
+            <button onClick={() => setSidebarOpen(true)} className="lg:hidden text-muted hover:text-main p-1">
               <Menu size={20} />
             </button>
             
@@ -207,7 +220,7 @@ export const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 
         {/* Content Body */}
         <main className="flex-1 overflow-y-auto p-4 lg:p-8">
-          <div className="max-w-7xl mx-auto space-y-6">
+          <div className="max-w-7xl mx-auto space-y-6 pb-20 lg:pb-0">
              {children}
           </div>
         </main>

@@ -32,7 +32,7 @@ export const Profile: React.FC = () => {
   };
 
   return (
-    <div className="space-y-8 pb-12">
+    <div className="space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4">
       <ProfileHeader 
         user={{...user, ...formData}} 
         isEditing={isEditing} 
@@ -41,8 +41,8 @@ export const Profile: React.FC = () => {
       />
 
       <div className="flex flex-col lg:flex-row gap-8">
-         {/* Settings Sidebar */}
-         <div className="w-full lg:w-72 space-y-2">
+         {/* Settings Tabs Container - Horizontal on Mobile, Vertical on Desktop */}
+         <div className="w-full lg:w-72 flex lg:flex-col overflow-x-auto lg:overflow-visible gap-2 pb-2 lg:pb-0 scrollbar-hide shrink-0">
             {[
                { id: 'general', label: 'البيانات الشخصية', icon: UserIcon },
                { id: 'academic', label: 'الهوية الأكاديمية', icon: GraduationCap },
@@ -52,10 +52,10 @@ export const Profile: React.FC = () => {
                <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center gap-4 px-5 py-4 rounded-xl text-sm font-bold transition-all duration-200 ${
+                  className={`flex items-center gap-3 px-5 py-3 lg:py-4 rounded-xl text-sm font-bold transition-all duration-200 whitespace-nowrap ${
                      activeTab === tab.id 
-                     ? 'bg-white dark:bg-[#1E1E1E] text-[#F38020] shadow-md shadow-orange-500/5 border border-orange-100 dark:border-[#333] translate-x-2' 
-                     : 'text-gray-500 hover:bg-white dark:hover:bg-[#1E1E1E] hover:text-gray-900 dark:hover:text-white'
+                     ? 'bg-white dark:bg-[#1E1E1E] text-[#F38020] shadow-md shadow-orange-500/5 border border-orange-100 dark:border-[#333] lg:translate-x-2' 
+                     : 'text-gray-500 hover:bg-white dark:hover:bg-[#1E1E1E] hover:text-gray-900 dark:hover:text-white border border-transparent'
                   }`}
                >
                   <tab.icon size={18} className={activeTab === tab.id ? 'text-[#F38020]' : 'text-gray-400'} /> 
@@ -65,8 +65,8 @@ export const Profile: React.FC = () => {
          </div>
 
          {/* Main Content Area */}
-         <div className="flex-1">
-            <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#333] shadow-sm p-8 min-h-[400px]">
+         <div className="flex-1 min-w-0">
+            <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl border border-gray-100 dark:border-[#333] shadow-sm p-6 md:p-8 min-h-[400px]">
                 
                 {activeTab === 'general' && (
                    <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -107,8 +107,8 @@ export const Profile: React.FC = () => {
                         <div className="space-y-2 md:col-span-2">
                            <label className="text-xs font-bold text-gray-700 dark:text-gray-300">البريد الإلكتروني</label>
                            <div className="w-full rounded-xl border border-gray-100 bg-gray-50 dark:bg-[#252525] dark:border-[#333] px-4 py-3 text-sm text-gray-500 flex items-center justify-between">
-                              {user.email}
-                              <div className="flex items-center gap-1 text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded text-xs font-bold">
+                              <span className="truncate">{user.email}</span>
+                              <div className="flex items-center gap-1 text-green-600 bg-green-50 dark:bg-green-900/20 px-2 py-0.5 rounded text-xs font-bold shrink-0">
                                   <Shield size={12} /> موثق
                               </div>
                            </div>
@@ -185,6 +185,16 @@ export const Profile: React.FC = () => {
                         <h3 className="text-lg font-bold text-gray-900 dark:text-white">كلمة المرور والأمان</h3>
                         <p className="text-sm text-gray-500 max-w-sm mx-auto mt-2">
                             يتم إدارة كلمات المرور عبر بروتوكولات Firebase الآمنة. لتغيير كلمة المرور، يرجى تسجيل الخروج واستخدام خيار "نسيت كلمة المرور".
+                        </p>
+                    </div>
+                 )}
+
+                 {activeTab === 'notifications' && (
+                    <div className="text-center py-12">
+                        <Bell size={48} className="mx-auto text-gray-200 mb-4" />
+                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">إعدادات الإشعارات</h3>
+                        <p className="text-sm text-gray-500 max-w-sm mx-auto mt-2">
+                            قريباً: تحكم كامل في نوع الإشعارات التي تصلك عبر البريد الإلكتروني والهاتف.
                         </p>
                     </div>
                  )}

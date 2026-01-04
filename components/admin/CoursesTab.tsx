@@ -15,10 +15,10 @@ export const CoursesTab: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Editor State
-  // We initialize with a safe default object to avoid null checks everywhere
   const [editingCourse, setEditingCourse] = useState<Partial<Course>>({});
   const [expandedLesson, setExpandedLesson] = useState<string | null>(null);
   const [activeLessonTab, setActiveLessonTab] = useState<'content' | 'quiz' | 'settings'>('content');
+  const [showMobileSettings, setShowMobileSettings] = useState(false); // Mobile toggle for metadata
 
   const OWNER_EMAIL = "toji123oodo@gmail.com";
   const isOwner = user?.email === OWNER_EMAIL;
@@ -36,19 +36,19 @@ export const CoursesTab: React.FC = () => {
     });
     setIsModalOpen(true);
     setExpandedLesson(null);
+    setShowMobileSettings(false);
   };
 
   const handleEditClick = (course: Course) => {
     if (!isOwner) return;
-    // Deep copy to avoid mutating state directly
     setEditingCourse(JSON.parse(JSON.stringify(course)));
     setIsModalOpen(true);
     setExpandedLesson(null);
+    setShowMobileSettings(false);
   };
 
   const handleSave = async () => {
     if (!editingCourse?.title || !isOwner) return;
-    
     try {
         const courseData: Course = {
             id: editingCourse.id || 'c-' + Date.now(),
@@ -171,9 +171,9 @@ export const CoursesTab: React.FC = () => {
          {isOwner && (
            <button 
              onClick={openNewCourseModal} 
-             className="btn-primary flex items-center gap-2 px-6 py-2.5 shadow-lg shadow-orange-500/20"
+             className="btn-primary flex items-center gap-2 px-6 py-2.5 shadow-lg shadow-orange-500/20 whitespace-nowrap"
            >
-             <Plus size={18}/> Create New Course
+             <Plus size={18}/> <span className="hidden sm:inline">Create New Course</span><span className="sm:hidden">New</span>
            </button>
          )}
       </div>
@@ -251,33 +251,42 @@ export const CoursesTab: React.FC = () => {
           <div className="bg-white dark:bg-[#1E1E1E] rounded-2xl shadow-2xl w-full max-w-7xl h-[95vh] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200 border border-gray-200 dark:border-[#333]">
              
              {/* Modal Header */}
-             <div className="px-6 py-4 border-b border-gray-200 dark:border-[#333] flex justify-between items-center bg-white dark:bg-[#1E1E1E]">
-               <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-brand-orange/10 text-brand-orange rounded-lg flex items-center justify-center">
+             <div className="px-6 py-4 border-b border-gray-200 dark:border-[#333] flex flex-col sm:flex-row justify-between items-center bg-white dark:bg-[#1E1E1E] gap-3">
+               <div className="flex items-center gap-3 w-full sm:w-auto">
+                  <div className="w-10 h-10 bg-brand-orange/10 text-brand-orange rounded-lg flex items-center justify-center shrink-0">
                      <Layout size={20} />
                   </div>
                   <div>
                       <h3 className="font-bold text-lg text-gray-900 dark:text-white">
-                        {editingCourse.id ? 'Edit Course Content' : 'Create New Course'}
+                        {editingCourse.id ? 'Edit Course' : 'New Course'}
                       </h3>
                       <p className="text-xs text-gray-500 dark:text-gray-400">
-                        {editingCourse.lessons?.length || 0} Lessons • {editingCourse.subject || 'Uncategorized'}
+                        {editingCourse.lessons?.length || 0} Lessons
                       </p>
                   </div>
                </div>
-               <div className="flex gap-3">
-                  <button onClick={() => setIsModalOpen(false)} className="px-5 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#333] rounded-lg transition-colors">
+               
+               {/* Mobile Toggle for Settings */}
+               <button 
+                 onClick={() => setShowMobileSettings(!showMobileSettings)}
+                 className="lg:hidden w-full sm:w-auto py-2 px-4 bg-gray-100 dark:bg-[#252525] rounded text-xs font-bold text-gray-600 dark:text-gray-300"
+               >
+                 {showMobileSettings ? 'Hide Details' : 'Show Course Details'}
+               </button>
+
+               <div className="flex gap-3 w-full sm:w-auto">
+                  <button onClick={() => setIsModalOpen(false)} className="flex-1 sm:flex-none px-5 py-2.5 text-sm font-bold text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-[#333] rounded-lg transition-colors">
                     Discard
                   </button>
-                  <button onClick={handleSave} className="btn-primary px-6 py-2.5 rounded-lg flex items-center gap-2 shadow-lg shadow-orange-500/20">
-                     <Save size={18}/> Save Changes
+                  <button onClick={handleSave} className="flex-1 sm:flex-none btn-primary px-6 py-2.5 rounded-lg flex items-center justify-center gap-2 shadow-lg shadow-orange-500/20">
+                     <Save size={18}/> Save
                   </button>
                </div>
              </div>
 
-             <div className="flex-1 flex overflow-hidden">
-                {/* Left Sidebar: Metadata */}
-                <div className="w-72 border-r border-gray-200 dark:border-[#333] overflow-y-auto bg-gray-50/50 dark:bg-[#181818] p-6 hidden lg:block">
+             <div className="flex-1 flex flex-col lg:flex-row overflow-hidden">
+                {/* Left Sidebar: Metadata (Hidden on mobile unless toggled) */}
+                <div className={`w-full lg:w-72 border-r border-gray-200 dark:border-[#333] overflow-y-auto bg-gray-50/50 dark:bg-[#181818] p-6 ${showMobileSettings ? 'block' : 'hidden lg:block'}`}>
                    <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-6">Course Settings</h4>
                    
                    <div className="space-y-5">
@@ -349,22 +358,22 @@ export const CoursesTab: React.FC = () => {
                 </div>
 
                 {/* Main Content: Lessons */}
-                <div className="flex-1 bg-white dark:bg-[#1E1E1E] flex flex-col min-w-0">
+                <div className={`flex-1 bg-white dark:bg-[#1E1E1E] flex flex-col min-w-0 ${showMobileSettings ? 'hidden lg:flex' : 'flex'}`}>
                    {/* Lessons Toolbar */}
-                   <div className="px-8 py-6 border-b border-gray-200 dark:border-[#333] flex justify-between items-center bg-gray-50/30 dark:bg-[#202020]">
+                   <div className="px-4 md:px-8 py-6 border-b border-gray-200 dark:border-[#333] flex justify-between items-center bg-gray-50/30 dark:bg-[#202020]">
                       <div>
-                         <h4 className="text-lg font-bold text-gray-900 dark:text-white">Curriculum Builder</h4>
-                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">Structure your lessons, add media, and configure exams.</p>
+                         <h4 className="text-lg font-bold text-gray-900 dark:text-white">Curriculum</h4>
+                         <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 hidden sm:block">Structure your lessons, add media, and configure exams.</p>
                       </div>
                       <button 
                         onClick={addLesson}
-                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-bold hover:opacity-90 transition-all shadow-md"
+                        className="flex items-center gap-2 px-4 py-2 bg-gray-900 dark:bg-white text-white dark:text-black rounded-lg text-sm font-bold hover:opacity-90 transition-all shadow-md whitespace-nowrap"
                       >
                         <Plus size={16} /> Add Lesson
                       </button>
                    </div>
 
-                   <div className="flex-1 overflow-y-auto p-8 space-y-4 bg-gray-50 dark:bg-[#161616]">
+                   <div className="flex-1 overflow-y-auto p-4 md:p-8 space-y-4 bg-gray-50 dark:bg-[#161616]">
                       {(editingCourse.lessons || []).length === 0 && (
                          <div className="flex flex-col items-center justify-center h-64 border-2 border-dashed border-gray-300 dark:border-[#333] rounded-xl text-gray-400">
                             <Layout size={48} className="mb-4 opacity-20" />
@@ -383,7 +392,7 @@ export const CoursesTab: React.FC = () => {
                                 setActiveLessonTab('content');
                              }}
                            >
-                              <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#333] flex items-center justify-center text-gray-600 dark:text-gray-400 text-xs font-bold border border-gray-300 dark:border-[#444]">
+                              <div className="w-8 h-8 rounded-lg bg-gray-200 dark:bg-[#333] flex items-center justify-center text-gray-600 dark:text-gray-400 text-xs font-bold border border-gray-300 dark:border-[#444] shrink-0">
                                  {index + 1}
                               </div>
                               <div className="flex-1 min-w-0">
@@ -393,11 +402,11 @@ export const CoursesTab: React.FC = () => {
                                    onClick={(e) => e.stopPropagation()}
                                    onChange={(e) => updateLesson(index, 'title', e.target.value)}
                                    className="w-full bg-transparent border-none outline-none font-bold text-gray-900 dark:text-white placeholder:text-gray-400 text-sm"
-                                   placeholder="Lesson Title (e.g., Introduction to Anatomy)"
+                                   placeholder="Lesson Title"
                                  />
                               </div>
                               <div className="flex items-center gap-2" onClick={(e) => e.stopPropagation()}>
-                                 <span className="text-[10px] text-gray-400 px-2 py-1 bg-gray-100 dark:bg-[#333] rounded">
+                                 <span className="hidden sm:inline text-[10px] text-gray-400 px-2 py-1 bg-gray-100 dark:bg-[#333] rounded">
                                     {(lesson.contents?.length || 0)} items
                                  </span>
                                  <button 
@@ -419,16 +428,16 @@ export const CoursesTab: React.FC = () => {
                            {expandedLesson === lesson.id && (
                               <div className="flex flex-col h-[500px]">
                                  {/* Internal Tabs */}
-                                 <div className="flex border-b border-gray-200 dark:border-[#333] bg-gray-50/50 dark:bg-[#1A1A1A] px-4">
+                                 <div className="flex border-b border-gray-200 dark:border-[#333] bg-gray-50/50 dark:bg-[#1A1A1A] px-2 overflow-x-auto">
                                     {[
-                                        { id: 'content', label: 'Content & Media', icon: Layout },
-                                        { id: 'quiz', label: 'Quiz & Exam', icon: Brain },
+                                        { id: 'content', label: 'Content', icon: Layout },
+                                        { id: 'quiz', label: 'Quiz', icon: Brain },
                                         { id: 'settings', label: 'Settings', icon: Settings },
                                     ].map(tab => (
                                         <button
                                             key={tab.id}
                                             onClick={() => setActiveLessonTab(tab.id as any)}
-                                            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors ${
+                                            className={`flex items-center gap-2 px-4 py-3 text-xs font-bold border-b-2 transition-colors whitespace-nowrap ${
                                                 activeLessonTab === tab.id 
                                                 ? 'border-[#F38020] text-[#F38020] bg-white dark:bg-[#1E1E1E]' 
                                                 : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
@@ -439,18 +448,18 @@ export const CoursesTab: React.FC = () => {
                                     ))}
                                  </div>
 
-                                 <div className="flex-1 overflow-y-auto p-6 bg-gray-50/30 dark:bg-[#181818]">
+                                 <div className="flex-1 overflow-y-auto p-4 md:p-6 bg-gray-50/30 dark:bg-[#181818]">
                                     
                                     {/* TAB 1: CONTENT */}
                                     {activeLessonTab === 'content' && (
                                         <div className="space-y-6">
-                                            <div className="flex justify-between items-center">
+                                            <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
                                                 <h5 className="text-xs font-bold text-gray-500 uppercase tracking-wider">Lesson Materials</h5>
-                                                <div className="flex gap-2">
-                                                    <button onClick={() => addResource(index, 'video')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-blue-400 hover:text-blue-500 text-xs font-medium transition-colors"><Video size={14}/> Video</button>
-                                                    <button onClick={() => addResource(index, 'audio')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-purple-400 hover:text-purple-500 text-xs font-medium transition-colors"><Mic size={14}/> Audio</button>
+                                                <div className="flex flex-wrap gap-2">
+                                                    <button onClick={() => addResource(index, 'video')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-blue-400 hover:text-blue-500 text-xs font-medium transition-colors"><Video size={14}/> Vid</button>
+                                                    <button onClick={() => addResource(index, 'audio')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-purple-400 hover:text-purple-500 text-xs font-medium transition-colors"><Mic size={14}/> Aud</button>
                                                     <button onClick={() => addResource(index, 'pdf')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-red-400 hover:text-red-500 text-xs font-medium transition-colors"><FileText size={14}/> PDF</button>
-                                                    <button onClick={() => addResource(index, 'article')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-orange-400 hover:text-orange-500 text-xs font-medium transition-colors"><AlignLeft size={14}/> Text</button>
+                                                    <button onClick={() => addResource(index, 'article')} className="flex items-center gap-1 px-3 py-1.5 bg-white dark:bg-[#252525] border border-gray-200 dark:border-[#333] rounded hover:border-orange-400 hover:text-orange-500 text-xs font-medium transition-colors"><AlignLeft size={14}/> Txt</button>
                                                 </div>
                                             </div>
 
@@ -458,7 +467,7 @@ export const CoursesTab: React.FC = () => {
                                                 {(lesson.contents || []).length === 0 && (
                                                     <div className="text-center py-12 border-2 border-dashed border-gray-200 dark:border-[#333] rounded-lg">
                                                         <Upload size={32} className="mx-auto text-gray-300 mb-2" />
-                                                        <p className="text-xs text-gray-400">No content added yet. Choose a type above.</p>
+                                                        <p className="text-xs text-gray-400">No content added yet.</p>
                                                     </div>
                                                 )}
 
@@ -488,7 +497,7 @@ export const CoursesTab: React.FC = () => {
                                                                             updated[index].contents.splice(cIdx, 1);
                                                                             setEditingCourse(prev => ({...prev, lessons: updated}));
                                                                         }}
-                                                                        className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100"
+                                                                        className="text-gray-400 hover:text-red-500"
                                                                     >
                                                                         <X size={16}/>
                                                                     </button>
@@ -531,8 +540,8 @@ export const CoursesTab: React.FC = () => {
                                     {activeLessonTab === 'quiz' && (
                                         <div className="space-y-6">
                                             {/* Quiz Config Bar */}
-                                            <div className="bg-blue-50 dark:bg-[#1a202c] p-4 rounded-lg border border-blue-100 dark:border-[#2d3748] flex flex-wrap gap-4 items-end">
-                                                <div className="flex-1 min-w-[200px]">
+                                            <div className="bg-blue-50 dark:bg-[#1a202c] p-4 rounded-lg border border-blue-100 dark:border-[#2d3748] flex flex-col sm:flex-row flex-wrap gap-4 items-end">
+                                                <div className="flex-1 w-full sm:w-auto">
                                                     <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Quiz Title</label>
                                                     <input 
                                                         value={lesson.quiz?.title || 'Lesson Quiz'}
@@ -546,38 +555,40 @@ export const CoursesTab: React.FC = () => {
                                                         className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none"
                                                     />
                                                 </div>
-                                                <div className="w-24">
-                                                    <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Passing %</label>
-                                                    <input 
-                                                        type="number"
-                                                        value={lesson.quiz?.passingScore || 50}
-                                                        onChange={(e) => {
-                                                            if (!editingCourse.lessons) return;
-                                                            const updated = [...editingCourse.lessons];
-                                                            const quiz = updated[index].quiz || { id: 'q-'+Date.now(), title: '', questions: [] };
-                                                            updated[index].quiz = { ...quiz, passingScore: Number(e.target.value) };
-                                                            setEditingCourse(prev => ({...prev, lessons: updated}));
-                                                        }}
-                                                        className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none text-center"
-                                                    />
+                                                <div className="flex gap-4 w-full sm:w-auto">
+                                                    <div className="w-1/2 sm:w-24">
+                                                        <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Passing %</label>
+                                                        <input 
+                                                            type="number"
+                                                            value={lesson.quiz?.passingScore || 50}
+                                                            onChange={(e) => {
+                                                                if (!editingCourse.lessons) return;
+                                                                const updated = [...editingCourse.lessons];
+                                                                const quiz = updated[index].quiz || { id: 'q-'+Date.now(), title: '', questions: [] };
+                                                                updated[index].quiz = { ...quiz, passingScore: Number(e.target.value) };
+                                                                setEditingCourse(prev => ({...prev, lessons: updated}));
+                                                            }}
+                                                            className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none text-center"
+                                                        />
+                                                    </div>
+                                                    <div className="w-1/2 sm:w-24">
+                                                        <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Time (Min)</label>
+                                                        <input 
+                                                            type="number"
+                                                            value={lesson.quiz?.timeLimit || 10}
+                                                            onChange={(e) => {
+                                                                if (!editingCourse.lessons) return;
+                                                                const updated = [...editingCourse.lessons];
+                                                                const quiz = updated[index].quiz || { id: 'q-'+Date.now(), title: '', questions: [] };
+                                                                updated[index].quiz = { ...quiz, timeLimit: Number(e.target.value) };
+                                                                setEditingCourse(prev => ({...prev, lessons: updated}));
+                                                            }}
+                                                            className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none text-center"
+                                                        />
+                                                    </div>
                                                 </div>
-                                                <div className="w-24">
-                                                    <label className="text-[10px] font-bold text-blue-600 dark:text-blue-400 uppercase mb-1 block">Time (Min)</label>
-                                                    <input 
-                                                        type="number"
-                                                        value={lesson.quiz?.timeLimit || 10}
-                                                        onChange={(e) => {
-                                                            if (!editingCourse.lessons) return;
-                                                            const updated = [...editingCourse.lessons];
-                                                            const quiz = updated[index].quiz || { id: 'q-'+Date.now(), title: '', questions: [] };
-                                                            updated[index].quiz = { ...quiz, timeLimit: Number(e.target.value) };
-                                                            setEditingCourse(prev => ({...prev, lessons: updated}));
-                                                        }}
-                                                        className="w-full bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded px-3 py-1.5 text-sm outline-none text-center"
-                                                    />
-                                                </div>
-                                                <div className="flex gap-2">
-                                                    <label className="cursor-pointer p-2 bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded hover:text-green-500 text-blue-500" title="Import JSON">
+                                                <div className="flex gap-2 w-full sm:w-auto">
+                                                    <label className="cursor-pointer p-2 bg-white dark:bg-[#2d3748] border border-blue-200 dark:border-[#4a5568] rounded hover:text-green-500 text-blue-500 flex-1 sm:flex-none flex justify-center" title="Import JSON">
                                                         <FileJson size={18}/>
                                                         <input type="file" className="hidden" accept=".json" onChange={(e) => handleFileUpload(e, index)} />
                                                     </label>
@@ -592,7 +603,7 @@ export const CoursesTab: React.FC = () => {
                                                             updated[index].quiz = quiz;
                                                             setEditingCourse(prev => ({...prev, lessons: updated}));
                                                         }}
-                                                        className="p-2 bg-brand-orange text-white rounded hover:bg-orange-600 shadow-sm flex items-center gap-2 text-xs font-bold px-4"
+                                                        className="p-2 bg-brand-orange text-white rounded hover:bg-orange-600 shadow-sm flex items-center justify-center gap-2 text-xs font-bold px-4 flex-[2] sm:flex-none"
                                                     >
                                                         <Plus size={16}/> Add Question
                                                     </button>
@@ -653,7 +664,7 @@ export const CoursesTab: React.FC = () => {
                                                                             updated[index].quiz!.questions[qIdx].correctOptionIndex = oIdx;
                                                                             setEditingCourse(prev => ({...prev, lessons: updated}));
                                                                         }}
-                                                                        className="accent-brand-orange cursor-pointer w-4 h-4"
+                                                                        className="accent-brand-orange cursor-pointer w-4 h-4 shrink-0"
                                                                     />
                                                                     <input 
                                                                         type="text" 
