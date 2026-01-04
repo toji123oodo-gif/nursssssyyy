@@ -1,22 +1,20 @@
 
 import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
-const { Link, useNavigate } = ReactRouterDOM as any;
-import { Cloud, Loader2, AlertCircle, Check } from 'lucide-react';
+const { useNavigate, Link } = ReactRouterDOM as any;
+import { Cloud, Loader2, AlertCircle, ArrowRight, Check, ShieldCheck } from 'lucide-react';
 import { useApp } from '../context/AppContext';
 
 export const Signup: React.FC = () => {
   const [formData, setFormData] = useState({ name: '', email: '', phone: '', password: '' });
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
+  
   const { user, signup } = useApp();
   const navigate = useNavigate();
 
-  // Automatically redirect if user is logged in
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard', { replace: true });
-    }
+    if (user) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
   const handleSignup = async (e: React.FormEvent) => {
@@ -25,69 +23,133 @@ export const Signup: React.FC = () => {
     setError('');
 
     try {
-        await signup(formData.email, formData.password, formData.name, formData.phone);
-        // Navigation handled by useEffect
+      await signup(formData.email, formData.password, formData.name, formData.phone);
     } catch (err: any) {
-        setError('Could not create account. Please try again.');
-        setIsLoading(false);
+      if (err.code === 'auth/email-already-in-use') setError('This email is already registered.');
+      else if (err.code === 'auth/weak-password') setError('Password should be at least 6 characters.');
+      else setError('Failed to create account. Please try again.');
+      setIsLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#101010] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        
-        <div className="text-center">
-           <div className="inline-flex items-center gap-2 mb-4 text-[#F38020]">
-              <Cloud size={32} strokeWidth={2} />
-           </div>
-           <h2 className="text-2xl font-bold text-main tracking-tight">Create your account</h2>
-           <p className="text-sm text-muted mt-2">Start your learning journey with NursyPlatform.</p>
-        </div>
+    <div className="min-h-screen w-full flex bg-white dark:bg-[#0a0a0a]">
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12 order-2 lg:order-1">
+         <div className="w-full max-w-sm space-y-8">
+            <div className="text-center lg:text-left">
+               <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Create an account</h2>
+               <p className="text-sm text-gray-500 mt-2">Start your journey with NursyPlatform today.</p>
+            </div>
 
-        <div className="cf-card p-8 bg-white dark:bg-[#1E1E1E] shadow-md">
-           {error && (
-             <div className="mb-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 p-3 rounded-[4px] flex items-start gap-3">
-                <AlertCircle size={16} className="text-red-600 dark:text-red-400 mt-0.5" />
-                <p className="text-xs text-red-700 dark:text-red-300 font-medium">{error}</p>
-             </div>
-           )}
+            {error && (
+               <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 rounded-md text-sm flex items-start gap-2">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0"/>
+                  <span>{error}</span>
+               </div>
+            )}
 
-           <form onSubmit={handleSignup} className="space-y-4">
-              <div className="space-y-1.5">
-                 <label className="text-xs font-semibold text-main">Full Name</label>
-                 <input type="text" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} className="cf-input" placeholder="John Doe" />
-              </div>
+            <form onSubmit={handleSignup} className="space-y-4">
+               <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Full Name</label>
+                  <input 
+                     type="text" 
+                     className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
+                     placeholder="John Doe"
+                     value={formData.name}
+                     onChange={e => setFormData({...formData, name: e.target.value})}
+                     required
+                  />
+               </div>
 
-              <div className="space-y-1.5">
-                 <label className="text-xs font-semibold text-main">Phone Number</label>
-                 <input type="tel" required value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} className="cf-input" placeholder="01xxxxxxxxx" />
-              </div>
+               <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-1.5">
+                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Email</label>
+                     <input 
+                        type="email" 
+                        className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
+                        placeholder="john@example.com"
+                        value={formData.email}
+                        onChange={e => setFormData({...formData, email: e.target.value})}
+                        required
+                     />
+                  </div>
+                  <div className="space-y-1.5">
+                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Phone</label>
+                     <input 
+                        type="tel" 
+                        className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
+                        placeholder="01xxxxxxxxx"
+                        value={formData.phone}
+                        onChange={e => setFormData({...formData, phone: e.target.value})}
+                        required
+                     />
+                  </div>
+               </div>
 
-              <div className="space-y-1.5">
-                 <label className="text-xs font-semibold text-main">Email Address</label>
-                 <input type="email" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} className="cf-input" placeholder="student@example.com" />
-              </div>
+               <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Password</label>
+                  <input 
+                     type="password" 
+                     className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
+                     placeholder="Min 8 characters"
+                     value={formData.password}
+                     onChange={e => setFormData({...formData, password: e.target.value})}
+                     required
+                  />
+               </div>
 
-              <div className="space-y-1.5">
-                 <label className="text-xs font-semibold text-main">Password</label>
-                 <input type="password" required value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} className="cf-input" placeholder="Min. 8 characters" />
-              </div>
+               <div className="bg-gray-50 dark:bg-[#151515] p-3 rounded-lg flex gap-3 items-start">
+                  <div className="mt-0.5 text-green-500"><ShieldCheck size={16} /></div>
+                  <p className="text-xs text-gray-500 leading-tight">
+                     By creating an account, you agree to our Terms of Service and Privacy Policy. Your data is secure.
+                  </p>
+               </div>
 
-              <div className="text-[11px] text-muted flex items-start gap-2 pt-2">
-                 <div className="mt-0.5"><Check size={12} className="text-green-500" /></div>
-                 <p>By clicking Sign Up, you agree to our Terms, Privacy Policy and Cookies Policy.</p>
-              </div>
+               <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="w-full bg-[#1a1a1a] dark:bg-white text-white dark:text-black hover:opacity-90 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-2"
+               >
+                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'Create Account'} 
+                  {!isLoading && <ArrowRight size={16} />}
+               </button>
+            </form>
 
-              <button type="submit" disabled={isLoading} className="w-full btn-primary py-2 text-sm justify-center mt-4">
-                {isLoading ? <Loader2 className="animate-spin" size={16} /> : 'Sign Up'}
-              </button>
-           </form>
-        </div>
+            <p className="text-center text-sm text-gray-500">
+               Already have an account? <Link to="/login" className="text-[#F38020] font-medium hover:underline">Log in</Link>
+            </p>
+         </div>
+      </div>
 
-        <p className="text-center text-xs text-muted">
-          Already have an account? <Link to="/login" className="text-[#0051C3] dark:text-[#68b5fb] hover:underline">Log in</Link>
-        </p>
+      {/* Left Side - Visual (On right for Signup to alternate) */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#F38020] relative flex-col justify-between p-12 text-white overflow-hidden order-1 lg:order-2">
+         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1551076805-e1869033e561?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center mix-blend-multiply opacity-40"></div>
+         <div className="absolute inset-0 bg-gradient-to-br from-[#F38020]/90 to-black/60"></div>
+         
+         <div className="relative z-10 flex justify-end">
+            <div className="flex items-center gap-2 text-white/80">
+               <Cloud size={24} strokeWidth={2.5} />
+               <span className="font-bold text-xl tracking-tight">NursyPlatform</span>
+            </div>
+         </div>
+
+         <div className="relative z-10 max-w-lg ml-auto text-right">
+            <h1 className="text-4xl font-bold tracking-tight mb-6 leading-tight">
+               Start your professional <br/> nursing career here.
+            </h1>
+            <ul className="space-y-4 text-white/90 text-lg mb-8 inline-block text-right">
+               <li className="flex items-center justify-end gap-3">
+                  <span>Accredited Curriculum</span> <Check size={20} className="text-white" />
+               </li>
+               <li className="flex items-center justify-end gap-3">
+                  <span>AI Video Analysis</span> <Check size={20} className="text-white" />
+               </li>
+               <li className="flex items-center justify-end gap-3">
+                  <span>Verified Certificates</span> <Check size={20} className="text-white" />
+               </li>
+            </ul>
+         </div>
       </div>
     </div>
   );

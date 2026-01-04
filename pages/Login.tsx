@@ -2,16 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import * as ReactRouterDOM from 'react-router-dom';
 const { useNavigate, Link } = ReactRouterDOM as any;
-import { Cloud, Loader2, AlertCircle, ArrowLeft, ShieldCheck, Globe } from 'lucide-react';
+import { Cloud, Loader2, AlertCircle, ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { useApp } from '../context/AppContext';
-import firebase from 'firebase/compat/app';
-import { auth } from '../firebase';
-
-declare global {
-  interface Window {
-    recaptchaVerifier: any;
-  }
-}
 
 export const Login: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -22,33 +14,21 @@ export const Login: React.FC = () => {
   const { user, login, loginWithGoogle } = useApp();
   const navigate = useNavigate();
 
-  // Automatically redirect if user is logged in
   useEffect(() => {
-    if (user) {
-      navigate('/dashboard', { replace: true });
-    }
+    if (user) navigate('/dashboard', { replace: true });
   }, [user, navigate]);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
-
     try {
-      // Race the login against a 10s timeout to prevent infinite spinning
-      const loginPromise = login(email, password);
-      const timeoutPromise = new Promise((_, reject) => 
-        setTimeout(() => reject(new Error("TIMEOUT")), 10000)
-      );
-
-      await Promise.race([loginPromise, timeoutPromise]);
-      // If successful, useEffect will handle navigation when 'user' updates
+      await login(email, password);
     } catch (err: any) {
-      console.error(err);
-      if (err.message === "TIMEOUT") {
-        setError('اتصال الإنترنت ضعيف. يرجى المحاولة مرة أخرى.');
+      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password') {
+        setError('البريد الإلكتروني أو كلمة المرور غير صحيحة');
       } else {
-        setError('بيانات الدخول غير صحيحة.');
+        setError('حدث خطأ أثناء تسجيل الدخول. حاول مرة أخرى.');
       }
       setIsLoading(false);
     }
@@ -56,135 +36,125 @@ export const Login: React.FC = () => {
 
   const handleGoogle = async () => {
      try {
-        setError('');
         setIsLoading(true);
-        const googlePromise = loginWithGoogle();
-        const timeoutPromise = new Promise((_, reject) => 
-          setTimeout(() => reject(new Error("TIMEOUT")), 15000)
-        );
-        await Promise.race([googlePromise, timeoutPromise]);
+        await loginWithGoogle();
      } catch (e: any) {
-        if (e.message === "TIMEOUT") {
-           setError('فشل الاتصال بجوجل. تحقق من الإنترنت.');
-        } else if (e.code === 'auth/unauthorized-domain') {
-           // Smart domain suggestion
-           const host = window.location.hostname;
-           let suggestion = host;
-           if (host.includes('.pages.dev')) {
-              const parts = host.split('.');
-              if (parts.length >= 3) {
-                suggestion = parts.slice(-3).join('.');
-              }
-           }
-           setError(`الدومين غير مصرح به. أضف هذا الدومين في Firebase Console: ${suggestion}`);
-        } else if (e.code === 'auth/popup-closed-by-user') {
-           setError('تم إلغاء عملية الدخول.');
+        if (e.code === 'auth/unauthorized-domain') {
+           setError(`الدومين غير مصرح به: ${window.location.hostname}`);
         } else {
-           setError('فشل تسجيل الدخول باستخدام Google.');
+           setError('فشل الدخول عبر جوجل');
         }
         setIsLoading(false);
      }
   };
 
   return (
-    <div className="min-h-screen bg-[#F9FAFB] dark:bg-[#101010] flex flex-col items-center justify-center p-4">
-      <div className="w-full max-w-md space-y-8">
-        
-        {/* Header */}
-        <div className="text-center">
-           <div className="inline-flex items-center gap-2 mb-4 text-[#F38020]">
-              <Cloud size={32} strokeWidth={2} />
-           </div>
-           <h2 className="text-2xl font-bold text-main tracking-tight">Log in to NursyPlatform</h2>
-           <p className="text-sm text-muted mt-2">Access your educational resources and analytics.</p>
-        </div>
+    <div className="min-h-screen w-full flex bg-white dark:bg-[#0a0a0a]">
+      {/* Left Side - Visual & Branding */}
+      <div className="hidden lg:flex lg:w-1/2 bg-[#101010] relative flex-col justify-between p-12 text-white overflow-hidden">
+         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1576091160550-2187d800273a?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-20"></div>
+         <div className="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
+         
+         <div className="relative z-10">
+            <div className="flex items-center gap-2 text-[#F38020] mb-2">
+               <Cloud size={24} strokeWidth={2.5} />
+               <span className="font-bold text-xl tracking-tight text-white">NursyPlatform</span>
+            </div>
+         </div>
 
-        {/* Card */}
-        <div className="cf-card p-8 bg-white dark:bg-[#1E1E1E] shadow-md">
-           {error && (
-             <div className="mb-4 bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 p-3 rounded-[4px] flex items-start gap-3">
-                <AlertCircle size={16} className="text-red-600 dark:text-red-400 mt-0.5 shrink-0" />
-                <div className="flex flex-col gap-1 w-full">
-                  <p className="text-xs text-red-700 dark:text-red-300 font-medium whitespace-pre-wrap">{error}</p>
-                  {error.includes('Firebase Console') && (
-                    <div className="flex items-center gap-1 mt-1 p-1 bg-white/50 rounded border border-red-100 text-[10px] font-mono select-all w-fit">
-                      <Globe size={10} />
-                      {window.location.hostname.includes('.pages.dev') 
-                        ? window.location.hostname.split('.').slice(-3).join('.') 
-                        : window.location.hostname}
-                    </div>
-                  )}
-                </div>
-             </div>
-           )}
+         <div className="relative z-10 max-w-lg">
+            <h1 className="text-4xl font-bold tracking-tight mb-4 leading-tight">
+               Master Clinical Skills <br/> with AI Precision.
+            </h1>
+            <p className="text-gray-400 text-lg leading-relaxed mb-8">
+               Join thousands of Egyptian nursing students using Nursy to prepare for exams and clinical practice.
+            </p>
+            <div className="flex items-center gap-4">
+               <div className="flex -space-x-3">
+                  {[1,2,3,4].map(i => (
+                     <div key={i} className="w-10 h-10 rounded-full border-2 border-black bg-gray-800 flex items-center justify-center text-xs font-bold">
+                        S{i}
+                     </div>
+                  ))}
+               </div>
+               <div className="text-sm">
+                  <span className="block font-bold">4.9/5 Rating</span>
+                  <span className="text-gray-500">based on 1,200+ reviews</span>
+               </div>
+            </div>
+         </div>
+      </div>
 
-           <form onSubmit={handleLogin} className="space-y-5">
-              <div className="space-y-1.5">
-                 <label className="text-xs font-semibold text-main">Email Address</label>
-                 <input 
-                   type="email" 
-                   required
-                   value={email}
-                   onChange={(e) => setEmail(e.target.value)}
-                   className="cf-input"
-                   placeholder="student@example.com"
-                 />
-              </div>
+      {/* Right Side - Form */}
+      <div className="w-full lg:w-1/2 flex items-center justify-center p-6 sm:p-12">
+         <div className="w-full max-w-sm space-y-8">
+            <div className="text-center lg:text-left">
+               <h2 className="text-2xl font-bold text-gray-900 dark:text-white tracking-tight">Welcome back</h2>
+               <p className="text-sm text-gray-500 mt-2">Enter your credentials to access your account.</p>
+            </div>
 
-              <div className="space-y-1.5">
-                 <div className="flex justify-between">
-                    <label className="text-xs font-semibold text-main">Password</label>
-                    <a href="#" className="text-xs text-[#0051C3] dark:text-[#68b5fb] hover:underline">Forgot password?</a>
-                 </div>
-                 <input 
-                   type="password" 
-                   required
-                   value={password}
-                   onChange={(e) => setPassword(e.target.value)}
-                   className="cf-input"
-                   placeholder="••••••••"
-                 />
-              </div>
+            {error && (
+               <div className="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-400 p-3 rounded-md text-sm flex items-start gap-2">
+                  <AlertCircle size={16} className="mt-0.5 shrink-0"/>
+                  <span>{error}</span>
+               </div>
+            )}
 
-              <button 
-                type="submit" 
-                disabled={isLoading}
-                className="w-full btn-primary py-2 text-sm justify-center"
-              >
-                {isLoading ? <Loader2 className="animate-spin" size={16} /> : 'Log In'}
-              </button>
-           </form>
+            <form onSubmit={handleLogin} className="space-y-5">
+               <div className="space-y-1.5">
+                  <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Email</label>
+                  <input 
+                     type="email" 
+                     className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
+                     placeholder="name@example.com"
+                     value={email}
+                     onChange={e => setEmail(e.target.value)}
+                     required
+                  />
+               </div>
+               <div className="space-y-1.5">
+                  <div className="flex justify-between items-center">
+                     <label className="text-xs font-semibold text-gray-700 dark:text-gray-300">Password</label>
+                     <a href="#" className="text-xs text-[#F38020] hover:underline">Forgot password?</a>
+                  </div>
+                  <input 
+                     type="password" 
+                     className="w-full bg-white dark:bg-[#151515] border border-gray-300 dark:border-[#333] rounded-lg px-3 py-2.5 text-sm outline-none focus:border-[#F38020] focus:ring-1 focus:ring-[#F38020] transition-all"
+                     placeholder="••••••••"
+                     value={password}
+                     onChange={e => setPassword(e.target.value)}
+                     required
+                  />
+               </div>
 
-           <div className="my-6 flex items-center gap-4">
-              <div className="h-px bg-[#E5E5E5] dark:bg-[#333] flex-1"></div>
-              <span className="text-xs text-muted">OR</span>
-              <div className="h-px bg-[#E5E5E5] dark:bg-[#333] flex-1"></div>
-           </div>
+               <button 
+                  type="submit" 
+                  disabled={isLoading}
+                  className="w-full bg-[#F38020] hover:bg-[#d66e16] text-white py-2.5 rounded-lg text-sm font-semibold transition-all shadow-lg shadow-orange-500/20 flex items-center justify-center gap-2"
+               >
+                  {isLoading ? <Loader2 className="animate-spin" size={18} /> : 'Sign In'} 
+                  {!isLoading && <ArrowRight size={16} />}
+               </button>
+            </form>
 
-           <button 
-             onClick={handleGoogle}
-             disabled={isLoading}
-             className="w-full btn-secondary py-2 justify-center"
-           >
-             {isLoading ? <Loader2 className="animate-spin" size={16} /> : (
-                <>
-                   <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-4 h-4" alt="Google" />
-                   Continue with Google
-                </>
-             )}
-           </button>
-        </div>
+            <div className="relative">
+               <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-gray-200 dark:border-[#333]"></div></div>
+               <div className="relative flex justify-center text-xs uppercase"><span className="bg-white dark:bg-[#0a0a0a] px-2 text-gray-500">Or continue with</span></div>
+            </div>
 
-        {/* Footer */}
-        <p className="text-center text-xs text-muted">
-          Don't have an account? <Link to="/signup" className="text-[#0051C3] dark:text-[#68b5fb] hover:underline">Sign up</Link>
-        </p>
-        
-        <div className="flex justify-center gap-4 text-[10px] text-muted mt-8">
-           <a href="#" className="hover:text-main">Privacy Policy</a>
-           <span>•</span>
-           <a href="#" className="hover:text-main">Terms of Service</a>
-        </div>
+            <button 
+               onClick={handleGoogle}
+               disabled={isLoading}
+               className="w-full bg-white dark:bg-[#151515] border border-gray-200 dark:border-[#333] hover:bg-gray-50 dark:hover:bg-[#202020] text-gray-700 dark:text-gray-200 py-2.5 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2"
+            >
+               <img src="https://www.svgrepo.com/show/475656/google-color.svg" className="w-5 h-5" alt="Google" />
+               Google
+            </button>
+
+            <p className="text-center text-sm text-gray-500">
+               Don't have an account? <Link to="/signup" className="text-[#F38020] font-medium hover:underline">Sign up for free</Link>
+            </p>
+         </div>
       </div>
     </div>
   );
